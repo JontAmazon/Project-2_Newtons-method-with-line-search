@@ -41,6 +41,13 @@ class Optimization(object):
         #^above updates the self.alpha_k to be the new one 
         #below returns the new alpha_k. Don't know what is better
         return alpha_k
+    
+    def LineSearchInexact(self,x_k,s_k):
+        # inexact line search method, gives alphak
+        def step_function(alpha,x_k,s_k):
+            return self.function(x_k + alpha * s_k)
+        
+        #recommended default values
 
 
 
