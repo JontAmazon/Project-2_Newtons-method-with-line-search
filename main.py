@@ -10,6 +10,8 @@ def f(x):
 problem = optimization.Problem(f, 2)
 solver = optimization.Solver(problem)
 
-
+x = [4, 2]
+gradient = solver.compute_gradient(x)
+hessian = solver.compute_hessian(x)
 
 
