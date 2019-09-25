@@ -21,11 +21,21 @@ class Optimization(object):
         n = len(x_k)
         gradient_k = np.zeros(1,len(x_k))
         delta_x = np.zeros(1,n)
-        x = np.zeros(1,n)
-        for i in range(n):
-            delta_x[i] = x_k[i]-x_km1[0]
-            x[i] = 1 #Concatenate x[:i-1] delta_x[i] x[i+1:]  
-            gradient_k[i] = self.objective_function(x[i])/delta_x[i]
+        x = np.zeros(n,n)
+        
+        delta_x[0] = x_k[0]-x_km1[0]
+        x[:][0] = np.hstack((delta_x[0],x[1:]))
+        gradient_k[0] = self.objective_function(x[:][0])/delta_x[0]
+
+        for i in range(1,n-1):
+            delta_x[i] = x_k[i]-x_km1[i]
+            x[:][i] = np.hstack((x[:i-1],delta_x[i],x[i+1]))
+            gradient_k[i] = self.objective_function(x[:][i])/delta_x[i]
+
+        delta_x[n] = x_k[n]-x_km1[n]
+        x[:][0] = np.hstack((x[:-1], delta_x[n]))
+        gradient_k[n] = self.objective_function(x[:][n])/delta_x[n]
+        
         return gradient_k
 
 
