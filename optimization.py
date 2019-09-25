@@ -20,15 +20,13 @@ class Solver(object):
     def __init__(self, problem, g_tolerance=10^(-6), g_delta=10^(-8)):
         self.objective_function = problem.objective_function
         self.dimensions = problem.dimensions
-        if gradient != None:
+        if problem.gradient != None:
             self.gradient = problem.gradient
         self.g_tolerance = g_tolerance
         self.g_delta = g_delta
     
-    @methodclass
-    def optimize(cls, opt_object, methods):
-        
     def compute_gradient(self, x_k):
+
         # Does the explicit gradient function exist? Then use it!
         if self.gradient != None:
             return self.gradient(x_k)
@@ -36,11 +34,10 @@ class Solver(object):
         # If not, then we compute it numerically
         n = self.dimensions
         gradient_k = np.zeros(1,n)
-        x = np.zeros(n,n)
 
         for i in range(n):
             x = x_k.copy()
-            x[i] = x[i] + delta
+            x[i] = x[i] + self.g_delta
             gradient_k[i] = (self.objective_function(x)-self.objective_function(x_k))/self.g_delta
 
         return gradient_k
