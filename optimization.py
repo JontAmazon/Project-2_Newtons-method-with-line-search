@@ -5,13 +5,15 @@
 import numpy as np
 import scipy
 
-#todo: beräkna G och sedan H^0 = G^-1
 class Problem(object):
     def __init__(self, objective_function, dimensions, gradient=None):
         self.objective_function = objective_function
         self.dimensions = dimensions
         if gradient != None:
             self.gradient = gradient
+
+        #todo: beräkna G och sedan H^0 = G^-1
+
     
 
 class Solver(object):
@@ -24,7 +26,7 @@ class Solver(object):
         self.g_delta = g_delta
     
     @methodclass
-    def optimize(cls,opt_object,methods):
+    def optimize(cls, opt_object, methods):
         
     def compute_gradient(self, x_k):
         # Does the explicit gradient function exist? Then use it!
@@ -43,12 +45,26 @@ class Solver(object):
 
         return gradient_k
 
-
+    def compute_hessian(self, x):
+        # The i:th column of the Hessian G_i equals g(x) differentiated w.r.t. x_i
+        # This is approximated with a finite difference:
+        # G_i = (g(x + tol*e_i) - g(x))/tol
+        tol = 1e-8
+        hessian = np.zeros((self.dimensions, self.dimensions))
+        g = self.compute_gradient(x)
+        for i in range(self.dimensions):
+            xi = x
+            xi[i] = xi[i] + tol
+            hessian[:,i] = (self.compute_gradient(xi) - g)/tol
+        return hessian
+    
+    
+    
     def LineSearchExact(self, x_k, s_k):
     # exact line search method, gives alphak
         
-        def step_function(alpha,x_k,s_k):
-            return self.function(x_k + alpha * s_k)
+        def step_function(alpha, x_k, s_k):
+            return self.function(x_k + alpha*s_k)
         
         guess = self.alpha_k # Guess for the scipy optimizer. Don't know what is a reasonable guess. Maybe alpha_k-1
         
@@ -57,10 +73,10 @@ class Solver(object):
         #below returns the new alpha_k. Don't know what is better
         return alpha_k
     
-    def LineSearchInexact(self,x_k,s_k):
+    def LineSearchInexact(self, x_k, s_k):
         # inexact line search method, gives alphak
-        def step_function(alpha,x_k,s_k):
-            return self.function(x_k + alpha * s_k)
+        def step_function(alpha, x_k, s_k):
+            return self.function(x_k + alpha*s_k)
         
         #recommended default values
 
