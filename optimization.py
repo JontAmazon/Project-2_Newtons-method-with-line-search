@@ -7,25 +7,31 @@ import scipy
 
 class Optimization(object):
 
-    def __init__(self,objective_function,gradient=None):
+    def __init__(self,objective_function, dimensions, gradient=None):
         self.objective_function = objective_function
+        self.dimensions = dimensions
         if gradient != None:
             self.gradient = gradient
     
     @methodclass
     def optimize(cls,opt_object,methods):
         
-    def compute_gradient(self,x_k,x_km1):
+    def compute_gradient(self,x_k):
+        # Does the explicit gradient function exist? Then use it!
         if self.gradient != None:
             return self.gradient(x_k)
-        n = len(x_k)
-        gradient_k = np.zeros(1,len(x_k))
-        delta_x = np.zeros(1,n)
-        x = np.zeros(1,n)
+        
+        # If not, then we compute it numerically
+        n = self.dimensions
+        gradient_k = np.zeros(1,n)
+        x = np.zeros(n,n)
+        delta = 10^(-8)
+
         for i in range(n):
-            delta_x[i] = x_k[i]-x_km1[0]
-            x[i] = 1 #Concatenate x[:i-1] delta_x[i] x[i+1:]  
-            gradient_k[i] = self.objective_function(x[i])/delta_x[i]
+            x = x_k.copy()
+            x[i] = x[i] + delta
+            gradient_k[i] = (self.objective_function(x)-self.objective_function(x_k))/delta
+
         return gradient_k
 
 
