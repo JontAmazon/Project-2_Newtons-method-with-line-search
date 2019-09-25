@@ -76,11 +76,56 @@ class Solver(object):
         return alpha_k
     
     def line_search_inexact(self, x_k, s_k):
-        # inexact line search method, gives alphak
-        def step_function(alpha, x_k, s_k):
-            return self.function(x_k + alpha*s_k)
+        # Inexact line search method for computing alpha^(k)
         
-        #recommended default values
+        def lc_rc_wolfe_powell(self, alpha_0, alpha_L, x_k, s_k):
+            '''
+            Returns lc = True and rc = True if the Wolfe-Powell conditions
+            are fulfilled for alpha_0 and alpha_L.
+                                                                            '''                                                                       
+            #Define the values on which to evaluate the function and the gradient
+            alpha_0_eval = x_k + alpha_0 * s_k
+            alpha_L_eval = x_k + alpha_L * s_k
+            
+            #Evaluate the gradient for the two points defined above
+            df_alpha_0 = self.compute_gradient(alpha_0_eval)
+            df_alpha_L = self.compute_gradient(alpha_L_eval)
+            
+            #Evaluate the function in the same points
+            f_alpha_0 = self.objective_function(alpha_0_eval)
+            f_alpha_L = self.objective_function(alpha_L_eval)
+                
+            #Define the boolean return variables
+            lc = False
+            rc = False
+                
+            if df_alpha_0 >= self.sigma * df_alpha_L:
+                lc = True
+        
+            if f_alpha_0 <= f_alpha_L + self.rho*(alpha_0 - alpha_L)*df_alpha_L:
+                rc = True
+                    
+            return lc, rc
+        
+        def step_function(alpha_0, alpha_L, x_k,s_k):
+            
+            # Define the default values for the method parameters
+            self.rho = 0.1
+            self.sigma = 0.7
+            self.tao = 0.1
+            self.xi = 9
+            
+            #Initiate the boolean values of lc and rc using a guess alpha_0
+            lc, rc = lc_rc_wolfe_powell(alpha_0, alpha_L, x_k, s_k, sigma, rho)
+            
+            while (not lc and not rc):
+                if not lc:
+                    #Implementation of Block 1 in the slides
+                    
+                    
+                else:
+                    #Implementation of Block 2 in the slides
+
 
 
 
