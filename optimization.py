@@ -9,55 +9,60 @@ class Problem(object):
     def __init__(self, objective_function, dimensions, gradient=None):
         self.objective_function = objective_function
         self.dimensions = dimensions
-        if gradient != None:
-            self.gradient = gradient
-
-        #todo: beräkna G och sedan H^0 = G^-1
-
-    
+        self.gradient = gradient #(might be equal to None).
+        
 
 class Solver(object):
-    def __init__(self, problem, g_tolerance=10^(-6), g_delta=10^(-8)):
+    def __init__(self, problem, g_tolerance=1e-6, g_delta=1e-4):
         self.objective_function = problem.objective_function
         self.dimensions = problem.dimensions
-        if problem.gradient != None:
-            self.gradient = problem.gradient
+        self.gradient_function = problem.gradient #(might be equal to None).
         self.g_tolerance = g_tolerance
         self.g_delta = g_delta
-    
-    def compute_gradient(self, x_k):
-
-        # Does the explicit gradient function exist? Then use it!
-        if self.gradient != None:
-            return self.gradient(x_k)
         
-        # If not, then we compute it numerically
+        #todo: beräkna G och sedan H^0 = G^-1
+
+
+    def find_local_min(self, newton_method, line_search_method):
+        """Solves the problem of finding a local minimum of the function 
+            described in the input problem, using a Pseudo-Newton method
+            together with line search.
+        """
+        pass
+    
+    def compute_gradient(self, x):
+        # Do we have an explicit function for the gradient? Then use it!
+        if self.gradient_function != None:
+            return self.gradient_function(x)
+        
+        # If not, compute it with finite differences:
+        #   g = (f(x+dx) - f(x))/dx
         n = self.dimensions
-        gradient_k = np.zeros(1,n)
-
+        gradient = np.zeros(n)
+        f = self.objective_function
+        fx = f(x) #we only need to calculate this once
         for i in range(n):
-            x = x_k.copy()
-            x[i] = x[i] + self.g_delta
-            gradient_k[i] = (self.objective_function(x)-self.objective_function(x_k))/self.g_delta
-
-        return gradient_k
-
+            xx = x.copy()
+            xx[i] = xx[i] + self.g_delta
+            gradient[i] = (f(xx) - fx) / self.g_delta
+        return gradient
+    
     def compute_hessian(self, x):
         # The i:th column of the Hessian G_i equals g(x) differentiated w.r.t. x_i
         # This is approximated with a finite difference:
         # G_i = (g(x + tol*e_i) - g(x))/tol
-        tol = 1e-8
-        hessian = np.zeros((self.dimensions, self.dimensions))
-        g = self.compute_gradient(x)
-        for i in range(self.dimensions):
-            xi = x
-            xi[i] = xi[i] + tol
-            hessian[:,i] = (self.compute_gradient(xi) - g)/tol
+        n = self.dimensions
+        hessian = np.zeros((n,n))
+        g = self.compute_gradient
+        gx = g(x) #we only need to calculate this once
+        for i in range(n):
+            xx = x.copy()
+            xx[i] = xx[i] + self.g_delta
+            hessian[:,i] = (g(xx) - gx) / self.g_delta
         return hessian
     
     
-    
-    def LineSearchExact(self, x_k, s_k):
+    def line_search_exact(self, x_k, s_k):
     # exact line search method, gives alphak
         
         def step_function(alpha, x_k, s_k):
@@ -70,7 +75,7 @@ class Solver(object):
         #below returns the new alpha_k. Don't know what is better
         return alpha_k
     
-    def LineSearchInexact(self, x_k, s_k):
+    def line_search_inexact(self, x_k, s_k):
         # inexact line search method, gives alphak
         def step_function(alpha, x_k, s_k):
             return self.function(x_k + alpha*s_k)
