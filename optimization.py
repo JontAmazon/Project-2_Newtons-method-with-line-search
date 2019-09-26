@@ -88,9 +88,9 @@ class Solver(object):
             alpha_0_eval = x_k + alpha_0 * s_k
             alpha_L_eval = x_k + alpha_L * s_k
             
-            #Evaluate the gradient for the two points defined above
-            df_alpha_0 = self.compute_gradient(alpha_0_eval)
-            df_alpha_L = self.compute_gradient(alpha_L_eval)
+            #Evaluate the gradient for the two points defined above (using the chain rule, thus s_k)
+            df_alpha_0 = self.compute_gradient(alpha_0_eval).T * s_k
+            df_alpha_L = self.compute_gradient(alpha_L_eval).T * s_k
             
             #Evaluate the function in the same points
             f_alpha_0 = self.objective_function(alpha_0_eval)
@@ -105,6 +105,8 @@ class Solver(object):
         
             if f_alpha_0 <= f_alpha_L + self.rho*(alpha_0 - alpha_L)*df_alpha_L:
                 rc = True
+                
+            #TODO: Should we use the strong Wolfe condition
                     
             return lc, rc
         
@@ -120,8 +122,13 @@ class Solver(object):
             lc, rc = lc_rc_wolfe_powell(alpha_0, alpha_L, x_k, s_k, sigma, rho)
             
             while (not lc and not rc):
+                
+                #What happens if we have both LC and RC False?
+                
                 if not lc:
                     #Implementation of Block 1 in the slides
+                    d_alpha_0 #Compute delta(alpha_0) by extrapolation
+                    
                     
                     
                 else:
