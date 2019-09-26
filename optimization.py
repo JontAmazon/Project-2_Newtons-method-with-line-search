@@ -31,21 +31,27 @@ class Solver(object):
             described in the input problem, using a Quasi-Newton method
             together with line search.
         """
-        x = x0
+        x_km1 = x0*0.9
+        x_k = x0
+        x_kp1 = x0
+        
         g = self.compute_gradient(x)
         H = sl.inv(self.compute_hessian(x))
+        
         for i in range(self.max_iterations):
-            s = -H @ g #Newton direction
+            s_k = -H @ g #Newton direction
             alpha = self.line_search(line_search_method) # plus fler inparametrar
-            x = x + alpha*s
+            x_kp1 = x_k + alpha*s_k
             
-            g = self.compute_gradient(x)
+            g = self.compute_gradient(x_kp1)
             if sl.norm(g, 2) < self.tol:
-                G = self.compute_hessian(x)
+                G = self.compute_hessian(x_kp1)
                 if self.is_positive_definite(G):
                     print('Local minima found!')
                     return x
-            H = self.quasi_newton(quasi_newton_method, H) # plus fler inparametrar?
+            H = self.quasi_newton(quasi_newton_method, H, x_k, x_km1) # plus fler inparametrar?
+            x_km1 = x_k
+            x_k=x_kp1
         
         else:
             print('Local minima could not be found in ' \
@@ -56,34 +62,39 @@ class Solver(object):
         # switch-sats
         pass
     
-    def quasi_newton(self, quasi_newton_method, H): # plus fler inparametrar?
-        '''TODO'''
-        # switch-sats
-        pass
-
-    def good_broyden(self,x_k,x_km1,H):
-            delta_k = x_k - x_km1
-            gamma_k = self.compute_gradient(x_k)-self.compute_gradient(x_km1)
-            u = delta_k - H @ gamma_k
-            a = np.divide(1,u.T@gamma_k)
-            return H + a@u@u.T
-    def bad_broyden(self, x_k):
-        return np.linalg.inv(self.compute_hessian(x_k))
-
-    def davidson_fletcher_powell(self,x_k,x_km1,H):
+    # Methods to compute the inverse Hessian. All are accessed through the quasi_newton method below.
+    def good_broyden(self,H,x_k,x_km1):
         delta_k = x_k - x_km1
         gamma_k = self.compute_gradient(x_k)-self.compute_gradient(x_km1)
-        return H + np.linalg.inv(delta_k.T@gamma_k)@(delta_k@delta_k.T) - \
-            np.linalg.inv(gamma_k.T@H@gamma_k)@(H@gamma_k@gamma_k.T@H)
+        # u and a are just temporary variables used to
+        # increase the readability of the return statement
+        u = delta_k - H @ gamma_k
+        a = np.divide(1,u.T@gamma_k)
+        return H + a@u@u.T
+    def bad_broyden(self, H,x_k,x_km1):
+        return sl.inv(self.compute_hessian(x_k))
+
+    def davidson_fletcher_powell(self,H,x_k,x_km1):
+        delta_k = x_k - x_km1
+        gamma_k = self.compute_gradient(x_k)-self.compute_gradient(x_km1)
+        return H + sl.inv(delta_k.T@gamma_k)@(delta_k@delta_k.T) - \
+            sl.inv(gamma_k.T@H@gamma_k)@(H@gamma_k@gamma_k.T@H)
     
-    def broyden_fletcher_goldfarb_shanno(self,x_k,x_km1,H):
+    def broyden_fletcher_goldfarb_shanno(self,H,x_k,x_km1):
         delta_k = x_k - x_km1 
         gamma_k = self.compute_gradient(x_k) - self.compute_gradient(x_km1)
-        a = (1 + np.linalg.inv(delta_k.T@gamma_k)@(gamma_k.T@H@gamma_k))@\
-            (np.linalg.inv(delta_k.T@gamma_k)@delta_k@delta_k.T)
-        b = np.linalg.inv(delta_k.T@gamma_k)@(delta_k@gamma_k.T@H + H@gamma_k@delta_k.T)
+        a = (1 + sl.inv(delta_k.T@gamma_k)@(gamma_k.T@H@gamma_k))@\
+            (sl.inv(delta_k.T@gamma_k)@delta_k@delta_k.T)
+        b = sl.inv(delta_k.T@gamma_k)@(delta_k@gamma_k.T@H + H@gamma_k@delta_k.T)
         return H + a - b
-    
+    # Python-switch statement that calls the relevant quasi newton method.
+    def quasi_newton(self, quasi_newton_method, H, x_k, x_km1): # plus fler inparametrar?
+        method = {'good_broyden' : good_broyden,
+            'bad_broyden' : bad_broyden,
+            'davidson_fletcher_powell' : davidson_fletcher_powell,
+            'broyden_fletcher_goldfarb_shanno' : broyden_fletcher_goldfarb_shanno,
+        }
+        return method[quasi_newton_method](self,H,x_k,x_km1)
     
     def line_search_exact(self, x_k, s_k):
     # exact line search method, gives alphak
