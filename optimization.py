@@ -31,12 +31,12 @@ class Solver(object):
             described in the input problem, using a Quasi-Newton method
             together with line search.
         """
-        x_km1 = x0*0.9
+        x_km1 = np.zeros(self.dimensions)
         x_k = x0
         x_kp1 = x0
         
-        g = self.compute_gradient(x)
-        H = sl.inv(self.compute_hessian(x))
+        g = self.compute_gradient(x_k)
+        H = sl.inv(self.compute_hessian(x_k))
         
         for i in range(self.max_iterations):
             s_k = -H @ g #Newton direction
@@ -48,7 +48,7 @@ class Solver(object):
                 G = self.compute_hessian(x_kp1)
                 if self.is_positive_definite(G):
                     print('Local minima found!')
-                    return x
+                    return x_k
             H = self.quasi_newton(quasi_newton_method, H, x_k, x_km1) # plus fler inparametrar?
             x_km1 = x_k
             x_k=x_kp1
@@ -101,7 +101,7 @@ class Solver(object):
         
         guess = self.alpha_k # Guess for the scipy optimizer. Don't know what is a reasonable guess. Maybe alpha_k-1
         
-        self.alpha_k = optimize.minimize(step_function, guess, args=(x_k,s_k)) 
+        self.alpha_k = scipy.optimize.minimize(step_function, guess, args=(x_k,s_k)) 
         #^above updates the self.alpha_k to be the new one 
         #below returns the new alpha_k. Don't know what is better
         return alpha_k
@@ -164,7 +164,7 @@ class Solver(object):
         #ALTERNATIVELY: alpha_0 = np.random.rand(alpha_L, alpha_U, 1)
             
         #Compute the initial values of the function and the corresponding gradients
-        f_alpha_0, f_alpha_L, df_alpha_0, df_alpha_L = compute_f_and_df(alpha_0, alpha_L)
+        f_alpha_0, f_alpha_L, df_alpha_0, df_alpha_L = self.compute_f_and_df(alpha_0, alpha_L)
             
         #Initiate the boolean values of lc and rc 
         lc = False
@@ -198,11 +198,11 @@ class Solver(object):
         
         return alpha_0, f_alpha_0
     
-#    def line_search(self, line_search_method, x_k, s_k): # plus fler inparametrar
-#            method = {'line_search_inexact' : line_search_inexact,
-#            'line_search_exact' : line_search_exact,
-#            }
-#            return method[line_search_method](self,x_k,s_k)
+   def line_search(self, line_search_method, x_k, s_k): # plus fler inparametrar
+           method = {'line_search_inexact' : line_search_inexact,
+           'line_search_exact' : line_search_exact,
+           }
+           return method[line_search_method](self,x_k,s_k)
 
     def compute_gradient(self, x):
         # Do we have an explicit function for the gradient? Then use it!
