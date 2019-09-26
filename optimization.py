@@ -140,12 +140,6 @@ class Solver(object):
                     
             return lc, rc
         
-        def line_search(self, line_search_method, x_k, s_k): # plus fler inparametrar
-            method = {'line_search_inexact' : line_search_inexact,
-            'line_search_exact' : line_search_exact,
-            }
-            return method[line_search_method](self,x_k,s_k)
-        
         
         def step_function(alpha_0, alpha_L, x_k,s_k):
             
@@ -172,6 +166,12 @@ class Solver(object):
                     #Implementation of Block 2 in the slides
             pass
         pass
+        
+    def line_search(self, line_search_method, x_k, s_k): # plus fler inparametrar
+            method = {'line_search_inexact' : line_search_inexact,
+            'line_search_exact' : line_search_exact,
+            }
+            return method[line_search_method](self,x_k,s_k)
 
     def compute_gradient(self, x):
         # Do we have an explicit function for the gradient? Then use it!
