@@ -53,15 +53,9 @@ class Solver(object):
             x_km1 = x_k
             x_k=x_kp1
         
-        else:
-            print('Local minima could not be found in ' \
-                  + str(self.max_iterations) + ' iterations.')
-        pass
+        print('Local minima could not be found in ' \
+            + str(self.max_iterations) + ' iterations.')
     
-    def line_search(self, line_search_method): # plus fler inparametrar
-        '''TODO'''
-        # switch-sats
-        pass
     
     # Methods to compute the inverse Hessian. All are accessed through the quasi_newton method below.
     def good_broyden(self,H,x_k,x_km1):
@@ -145,6 +139,13 @@ class Solver(object):
             #TODO: Should we use the strong Wolfe condition
                     
             return lc, rc
+        
+        def line_search(self, line_search_method, x_k, s_k): # plus fler inparametrar
+            method = {'line_search_inexact' : line_search_inexact,
+            'line_search_exact' : line_search_exact,
+            }
+            return method[line_search_method](self,x_k,s_k)
+        
         
         def step_function(alpha_0, alpha_L, x_k,s_k):
             
