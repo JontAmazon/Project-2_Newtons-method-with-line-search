@@ -56,6 +56,7 @@ class Solver(object):
         else:
             print('Local minima could not be found in ' \
                   + str(self.max_iterations) + ' iterations.')
+        pass
     
     def line_search(self, line_search_method): # plus fler inparametrar
         '''TODO'''
@@ -71,6 +72,7 @@ class Solver(object):
         u = delta_k - H @ gamma_k
         a = np.divide(1,u.T@gamma_k)
         return H + a@u@u.T
+
     def bad_broyden(self, H,x_k,x_km1):
         return sl.inv(self.compute_hessian(x_k))
 
@@ -87,6 +89,7 @@ class Solver(object):
             (sl.inv(delta_k.T@gamma_k)@delta_k@delta_k.T)
         b = sl.inv(delta_k.T@gamma_k)@(delta_k@gamma_k.T@H + H@gamma_k@delta_k.T)
         return H + a - b
+
     # Python-switch statement that calls the relevant quasi newton method.
     def quasi_newton(self, quasi_newton_method, H, x_k, x_km1): # plus fler inparametrar?
         method = {'good_broyden' : good_broyden,
@@ -166,6 +169,8 @@ class Solver(object):
                     
                 else:
                     #Implementation of Block 2 in the slides
+            pass
+        pass
 
     def compute_gradient(self, x):
         # Do we have an explicit function for the gradient? Then use it!
