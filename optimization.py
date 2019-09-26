@@ -97,7 +97,7 @@ class Solver(object):
     # exact line search method, gives alphak
         
         def step_function(alpha, x_k, s_k):
-            return self.function(x_k + alpha*s_k)
+            return self.objective_function(x_k + alpha*s_k)
         
         guess = self.alpha_k # Guess for the scipy optimizer. Don't know what is a reasonable guess. Maybe alpha_k-1
         
