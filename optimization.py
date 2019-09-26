@@ -60,7 +60,29 @@ class Solver(object):
         '''TODO'''
         # switch-sats
         pass
-        
+
+    def good_broyden(self,x_k,x_km1,H):
+            delta_k = x_k - x_km1
+            gamma_k = self.compute_gradient(x_k)-self.compute_gradient(x_km1)
+            u = delta_k - H @ gamma_k
+            a = np.divide(1,u.T@gamma_k)
+            return H + a@u@u.T
+    def bad_broyden(self, x_k):
+        return np.linalg.inv(self.compute_hessian(x_k))
+
+    def davidson_fletcher_powell(self,x_k,x_km1,H):
+        delta_k = x_k - x_km1
+        gamma_k = self.compute_gradient(x_k)-self.compute_gradient(x_km1)
+        return H + np.linalg.inv(delta_k.T@gamma_k)@(delta_k@delta_k.T) - \
+            np.linalg.inv(gamma_k.T@H@gamma_k)@(H@gamma_k@gamma_k.T@H)
+    
+    def broyden_fletcher_goldfarb_shanno(self,x_k,x_km1,H):
+        delta_k = x_k - x_km1 
+        gamma_k = self.compute_gradient(x_k) - self.compute_gradient(x_km1)
+        a = (1 + np.linalg.inv(delta_k.T@gamma_k)@(gamma_k.T@H@gamma_k))@\
+            (np.linalg.inv(delta_k.T@gamma_k)@delta_k@delta_k.T)
+        b = np.linalg.inv(delta_k.T@gamma_k)@(delta_k@gamma_k.T@H + H@gamma_k@delta_k.T)
+        return H + a - b
     
     
     def line_search_exact(self, x_k, s_k):
@@ -134,12 +156,6 @@ class Solver(object):
                 else:
                     #Implementation of Block 2 in the slides
 
-
-
-
-
-
-
     def compute_gradient(self, x):
         # Do we have an explicit function for the gradient? Then use it!
         if self.gradient_function != None:
@@ -153,9 +169,9 @@ class Solver(object):
         fx = f(x) #we only need to calculate this once
         delta = 1e-4
         for i in range(n):
-            xx = x.copy()
-            xx[i] = xx[i] + delta
-            gradient[i] = (f(xx) - fx) / delta
+            x_copy = x.copy()
+            x_copy[i] = x_copy[i] + delta
+            gradient[i] = (f(x_copy) - fx) / delta
         return gradient
     
     def compute_hessian(self, x):
