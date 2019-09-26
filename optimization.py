@@ -129,9 +129,10 @@ class Solver(object):
                     
             return lc, rc
         
+        
         def compute_f_and_df(self, alpha_0, alpha_L):
-            '''Computes the function and gradient evaluated at the current 
-                of alpha_0 and alpha_L
+            '''Computes the function and the corresponding gradient evaluated 
+            at alpha_0.
                                                                             '''
             #Define the values on which to evaluate the function and the gradient
             alpha_0_eval = x_k + alpha_0 * s_k
@@ -158,10 +159,11 @@ class Solver(object):
         alpha_L = 0
         alpha_U = 10**99
         
-        #Initiate alpha_0 - HOW?
-        alpha_0 = np.copy(alpha_L)
+        #Initiate alpha_0 by taking the average of the boundary values
+        alpha_0 = (alpha_L + alpha_U)/2
+        #ALTERNATIVELY: alpha_0 = np.random.rand(alpha_L, alpha_U, 1)
             
-        #Compute the initial values of the function and its gradient
+        #Compute the initial values of the function and the corresponding gradients
         f_alpha_0, f_alpha_L, df_alpha_0, df_alpha_L = compute_f_and_df(alpha_0, alpha_L)
             
         #Initiate the boolean values of lc and rc 
