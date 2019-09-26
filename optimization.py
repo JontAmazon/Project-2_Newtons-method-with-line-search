@@ -129,14 +129,10 @@ class Solver(object):
                     
             return lc, rc
         
-        def step_function(alpha_0, alpha_L, x_k,s_k):
-            
-            # Define the default values for the method parameters
-            self.rho = 0.1
-            self.sigma = 0.7
-            self.tao = 0.1
-            self.chi = 9
-            
+        def compute_f_and_df(self, alpha_0, alpha_L):
+            '''Computes the function and gradient evaluated at the current 
+                of alpha_0 and alpha_L
+                                                                            '''
             #Define the values on which to evaluate the function and the gradient
             alpha_0_eval = x_k + alpha_0 * s_k
             alpha_L_eval = x_k + alpha_L * s_k
@@ -149,37 +145,59 @@ class Solver(object):
             f_alpha_0 = self.objective_function(alpha_0_eval)
             f_alpha_L = self.objective_function(alpha_L_eval)
             
-            #Initiate the boolean values of lc and rc 
-            lc, rc = lc_rc_wolfe_powell(alpha_0, alpha_L, x_k, s_k, f_alpha_0, \
-                                        f_alpha_L, df_alpha_0, df_alpha_L)
-            
-            while (not lc and not rc):
-                
-                
-                if not lc:
-                    #Implementation of Block 1 in the slides
-                    
-                    delta_alpha_0 = (alpha_0, alpha_L)*df_alpha_0/(df_alpha_L - df_alpha_0) #Compute delta(alpha_0) by extrapolation
-                    delta_alpha_0 = np.max(delta_alpha_0, self.tao*(alpha_L - alpha_L)) #Make sure delta_alpha_0 is not too small
-                    delta_alpha_0 = np.min(delta_alpha_0, self.chi*(alpha_L - alpha_L)) #Make sure delta_alpha_0 is not too large
-                    alpha_L = np.copy(alpha_0) #Assign the value of alpha_0 to alpha_L
-                    alpha_0 = alpha_0 + delta_alpha_0#Update the value of alpha_0
-                else:
-                    #Implementation of Block 2 in the slides
-                    
-                    alpha_U = np.min(alpha_0, alpha_U)
-                    bar_alpha_0 = ((alpha_0 - alpha_L)**2)*df_alpha_L/2*(f_alpha_L - f_alpha_0 + (alpha_0 - alpha_L)*df_alpha_L) #Compute bar(alpha_0) by interpolation
-                    bar_alpha_0 = np.max(bar_alpha_0, alpha_L + self.tao*(alpha_L - alpha_L)) #Make sure bar_alpha_0 is not too small
-                    bar_alpha_0 = np.min(bar_alpha_0, alpha_U - self.tao*(alpha_L - alpha_L)) #Make sure bar_alpha_0 is not too large
-                    alpha_0 = bar_alpha_0
-            pass
-        pass
+            return f_alpha_0, f_alpha_L, df_alpha_0, df_alpha_L
         
-    def line_search(self, line_search_method, x_k, s_k): # plus fler inparametrar
-            method = {'line_search_inexact' : line_search_inexact,
-            'line_search_exact' : line_search_exact,
-            }
-            return method[line_search_method](self,x_k,s_k)
+            
+        #Define the default values for the method parameters
+        self.rho = 0.1
+        self.sigma = 0.7
+        self.tao = 0.1
+        self.chi = 9
+            
+        #Initiate alpha_L and alpha_U
+        alpha_L = 0
+        alpha_U = 10**99
+        
+        #Initiate alpha_0 - HOW?
+        alpha_0 = np.copy(alpha_L)
+            
+        #Compute the initial values of the function and its gradient
+        f_alpha_0, f_alpha_L, df_alpha_0, df_alpha_L = compute_f_and_df(alpha_0, alpha_L)
+            
+        #Initiate the boolean values of lc and rc 
+        lc = False
+        rc = False
+            
+        while (not lc and not rc):
+                
+            if not lc:
+                #Implementation of Block 1 in the slides
+                    
+                delta_alpha_0 = (alpha_0, alpha_L)*df_alpha_0/(df_alpha_L - df_alpha_0) #Compute delta(alpha_0) by extrapolation
+                delta_alpha_0 = np.max(delta_alpha_0, self.tao*(alpha_L - alpha_L)) #Make sure delta_alpha_0 is not too small
+                delta_alpha_0 = np.min(delta_alpha_0, self.chi*(alpha_L - alpha_L)) #Make sure delta_alpha_0 is not too large
+                alpha_L = np.copy(alpha_0) #Assign the value of alpha_0 to alpha_L
+                alpha_0 = alpha_0 + delta_alpha_0#Update the value of alpha_0
+            else:
+                #Implementation of Block 2 in the slides
+                    
+                alpha_U = np.min(alpha_0, alpha_U)
+                bar_alpha_0 = ((alpha_0 - alpha_L)**2)*df_alpha_L/2*(f_alpha_L - f_alpha_0 + (alpha_0 - alpha_L)*df_alpha_L) #Compute bar(alpha_0) by interpolation
+                bar_alpha_0 = np.max(bar_alpha_0, alpha_L + self.tao*(alpha_L - alpha_L)) #Make sure bar_alpha_0 is not too small
+                bar_alpha_0 = np.min(bar_alpha_0, alpha_U - self.tao*(alpha_L - alpha_L)) #Make sure bar_alpha_0 is not too large
+                alpha_0 = bar_alpha_0 #Update the value of alpha_0
+                
+            f_alpha_0, f_alpha_L, df_alpha_0, df_alpha_L = compute_f_and_df(alpha_0, alpha_L)
+            lc, rc = lc_rc_wolfe_powell(alpha_0, alpha_L, x_k, s_k, f_alpha_0, \
+                                    f_alpha_L, df_alpha_0, df_alpha_L)
+        
+        return alpha_0, f_alpha_0
+    
+#    def line_search(self, line_search_method, x_k, s_k): # plus fler inparametrar
+#            method = {'line_search_inexact' : line_search_inexact,
+#            'line_search_exact' : line_search_exact,
+#            }
+#            return method[line_search_method](self,x_k,s_k)
 
     def compute_gradient(self, x):
         # Do we have an explicit function for the gradient? Then use it!
