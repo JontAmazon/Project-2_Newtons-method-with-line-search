@@ -183,13 +183,16 @@ class Solver(object):
             else:
                 #Implementation of Block 2 in the slides
                     
-                alpha_U = np.min(alpha_0, alpha_U)
+                alpha_U = np.min(alpha_0, alpha_U) #Update the lower bound
                 bar_alpha_0 = ((alpha_0 - alpha_L)**2)*df_alpha_L/2*(f_alpha_L - f_alpha_0 + (alpha_0 - alpha_L)*df_alpha_L) #Compute bar(alpha_0) by interpolation
                 bar_alpha_0 = np.max(bar_alpha_0, alpha_L + self.tao*(alpha_L - alpha_L)) #Make sure bar_alpha_0 is not too small
                 bar_alpha_0 = np.min(bar_alpha_0, alpha_U - self.tao*(alpha_L - alpha_L)) #Make sure bar_alpha_0 is not too large
                 alpha_0 = bar_alpha_0 #Update the value of alpha_0
                 
+            #Compute the function values and their corresponing gradients
             f_alpha_0, f_alpha_L, df_alpha_0, df_alpha_L = compute_f_and_df(alpha_0, alpha_L)
+            
+            #Return the boolean values of lc and rc for the next iteration
             lc, rc = lc_rc_wolfe_powell(alpha_0, alpha_L, x_k, s_k, f_alpha_0, \
                                     f_alpha_L, df_alpha_0, df_alpha_L)
         
