@@ -3,6 +3,7 @@ import optimization
 import numpy as np
 import scipy.linalg as sl
 import scipy.optimize as opt
+'''EV TODO = calculate gradient and hessian with numpy!'''
 
 
 def f(x):
@@ -23,7 +24,7 @@ def G(x):
     
 
 problem = optimization.Problem(f)
-solver = optimization.Solver(problem, dimensions=2, tol=1e-5, grad_tol=1e-6, hess_tol=1e-4)
+solver = optimization.Solver(problem, dimensions=2, tol=1e-5, grad_tol=1e-6, hess_tol=1e-3)
 
 newton_methods = ['exact_newton', 'good_broyden', 'bad_broyden', \
                   'davidon_fletcher_powell', 'broyden_fletcher_goldfarb_shanno']
@@ -31,7 +32,7 @@ line_search_methods = [None, 'exact_line_search', 'wolfe-powell', 'goldstein']
 
 # x, nice grad_tol/hess_tol
 #x0 = [4, 2]    #1e-8   1e-3
-x0 = [1.05, 1.00]    #1e-8   1e-5
+x0 = [1.0, 1000.0]    #1e-8   1e-5
 #x0 = [10, 10]
 #x0 = [37, 100] #1e-6   1e-3
 x, fmin = solver.find_local_min(newton_methods[0], x0, line_search_methods[0], debug=True)

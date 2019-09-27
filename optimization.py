@@ -61,33 +61,28 @@ class Solver(object):
         
         for i in range(self.max_iterations):
             if self.debug:
-                print('iteration: ' + str(i))
-                print('x_k: ' + str(x_k.T))
-                print('f(x_k): ' + str(self.objective_function(x_k)))                
-                print('||g - g_correct||: ' + str(sl.norm(g - gradient(x_k), 2)))
-#                print(g)
-#                print(gradient(x_k))                
-                print('||H - H_correct||: ' + str(sl.norm(H - sl.inv(G(x_k)), 2)))
+                print('                   #' + str(i))
+                print('x_k:               ' + str(x_k.T))
+                print('f(x_k):            ' + str(self.objective_function(x_k)))                
+                print('||g||:             ' + str(sl.norm(g,2)))
+                print('||g_correct||:     ' + str(sl.norm(gradient(x_k),2)))
+                print('||H||:             ' + str(sl.norm(H,2)))
+                print('||H_correct||:     ' + str(sl.norm(sl.inv(G(x_k)), 2)))
                 print()
-#                print('||g||: ' + str(sl.norm(g,2)))
-#                print('g(x_k): ' +  str(g))
-#                print('g(x_k) correct: ' + str(g(x_k)) + '\n')
-#                print('H(x_k): ' + str(H) + '\n')
-                
-                
+
+            if sl.norm(g, 2) < self.tol:
+                print('||g|| < tol ==> We are done if only G > 0')
+                G = self.compute_hessian(x_kp1)
+                if self.is_positive_definite(G):
+                    print('Yaaay! Local minima found after ' + str(i) + ' iterations.')
+                    return x_k, self.objective_function(x_k)
+                print('Sadly, it was not the case.\n')
             
             s_k = -H @ g #Newton direction
             alpha = self.line_search(line_search_method, x_k, s_k)
             x_kp1 = x_k + alpha*s_k
             
             g = self.compute_gradient(x_kp1)
-            if sl.norm(g, 2) < self.tol:
-                print('||g|| < tol, lets check if G > 0')
-                G = self.compute_hessian(x_kp1)
-                if self.is_positive_definite(G):
-                    print('Local minima found after ' + str(i) + ' iterations.')
-                    return x_k, self.objective_function(x_k)
-                print('Sadly, it was the case that ||g|| < 0.\n')
             H = self.quasi_newton(quasi_newton_method, H, x_k, x_km1)
             x_km1 = x_k
             x_k=x_kp1
