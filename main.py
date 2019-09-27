@@ -17,11 +17,11 @@ problem = optimization.Problem(f)
 solver = optimization.Solver(problem, tol=1e-5, grad_tol=1e-4, hess_tol=1e-5)
 
 newton_methods = ['exact_newton', 'good_broyden', 'bad_broyden', \
-                  'davidson_fletcher_powell', 'broyden_fletcher_goldfarb_shanno']
+                  'davidon_fletcher_powell', 'broyden_fletcher_goldfarb_shanno']
 line_search_methods = [None, 'exact_line_search', 'wolfe-powell', 'goldstein']
 
 x0 = [1, 1]
-x, fmin = solver.find_local_min(newton_methods[0], x0, line_search_methods[0], debug=True)
+x, fmin = solver.find_local_min(newton_methods[3], x0, line_search_methods[0], debug=True)
 
 
 
