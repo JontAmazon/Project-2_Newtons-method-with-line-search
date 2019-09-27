@@ -16,13 +16,16 @@ class Problem(object):
         
 
 class Solver(object):
-    def __init__(self, problem, tol=1e-6, max_iterations=100, grad_tol=1e-4, hess_tol=1e-5):
+    def __init__(self, problem, dimensions=None, tol=1e-6, max_iterations=100, grad_tol=1e-4, hess_tol=1e-5):
         self.objective_function = problem.objective_function
         self.gradient_function = problem.gradient_function #(might be equal to None).
         self.tol = tol
         self.grad_tol = grad_tol
         self.hess_tol = hess_tol
         self.max_iterations = max_iterations
+        if dimensions is not None:
+            self.dimensions = dimensions #this can be removed in the final version.
+                                        #just want it for debugging purposes.
 
 
     def find_local_min(self, quasi_newton_method, x0, line_search_method=None, debug=False):
@@ -42,14 +45,25 @@ class Solver(object):
 
         H = sl.inv(G)
         
+        if debug:
+            def gradient(x):
+                grad = np.zeros(2)
+                grad[0] = 400*x[0]**3 - 400*x[0]*x[1] + 2*x[0] - 2
+                grad[1] = -200*x[0]**2 + 200*x[1]
+                return grad
+
+        
         for i in range(self.max_iterations):
             if self.debug:
+                gradient_by_function = gradient(x_k)
+                
                 print('iteration: ' + str(i))
                 print('x_k: ' + str(x_k))
                 print('f(x_k): ' + str(self.objective_function(x_k)))
                 print('||g||: ' + str(sl.norm(g,2)))
                 print('g(x_k): ' +  str(g))
-                print('H(x_k): ' + str(H) + '\n')
+                print('g(x_k) correct: ' + str(gradient_by_function) + '\n')
+#                print('H(x_k): ' + str(H) + '\n')
                 
                 
             
