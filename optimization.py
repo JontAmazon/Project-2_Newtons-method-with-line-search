@@ -132,7 +132,7 @@ class Solver(object):
         alpha_k = scipy.optimize.minimize(step_function, guess, args=(x_k,s_k)) 
         
         #below returns the new alpha_k. Don't know what is better
-        return self.alpha_k
+        return alpha_k
     
     
     def inexact_line_search(self, line_search_method, x_k, s_k):
@@ -256,7 +256,7 @@ class Solver(object):
         gradient = np.zeros(n)
         f = self.objective_function
         fx = f(x) #we only need to calculate this once
-        delta = 1e-4
+        delta = 1e-1
         for i in range(n):
             x_copy = x.copy()
             x_copy[i] = x_copy[i] + delta
