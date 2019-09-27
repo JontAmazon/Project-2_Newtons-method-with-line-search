@@ -127,10 +127,10 @@ class Solver(object):
         def step_function(alpha, x_k, s_k):
             return self.objective_function(x_k + alpha*s_k)
         
-        guess = self.alpha_k # Guess for the scipy optimizer. Don't know what is a reasonable guess. Maybe alpha_k-1
+        guess = 1 # Guess for the scipy optimizer. Don't know what is a reasonable guess. Maybe alpha_k-1. Or just 1?
         
-        self.alpha_k = scipy.optimize.minimize(step_function, guess, args=(x_k,s_k)) 
-        #^above updates the self.alpha_k to be the new one 
+        alpha_k = scipy.optimize.minimize(step_function, guess, args=(x_k,s_k)) 
+        
         #below returns the new alpha_k. Don't know what is better
         return self.alpha_k
     
@@ -228,9 +228,21 @@ class Solver(object):
                 
         return lc, rc
 
-    def lc_rc_goldstein(self):
+    def lc_rc_goldstein(self, alpha_0, alpha_L, x_k, s_k, f_alpha_0, \
+                           f_alpha_L, df_alpha_0, df_alpha_L):
         '''TODO'''
-        pass
+        #Define the boolean return variables
+        lc = False
+        rc = False
+        
+        if f_alpha_0 >= f_alpha_l + (1-self.rho)*(alpha_0-alpha_L)*df_alpha_L:
+            lc = True
+            
+        if f_alpha_0 <= f_alpha_L + self.rho*(alpha_0-alpha_L)*df_alpha_L:
+            rc = True
+            
+        return lc, rc
+        
 
 
     def compute_gradient(self, x):
