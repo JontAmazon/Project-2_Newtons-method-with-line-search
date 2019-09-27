@@ -235,7 +235,7 @@ class Solver(object):
         lc = False
         rc = False
         
-        if f_alpha_0 >0 f_alpha_l + (1-self.rho)*(alpha_0-alpha_L)*df_alpha_L:
+        if f_alpha_0 >= f_alpha_l + (1-self.rho)*(alpha_0-alpha_L)*df_alpha_L:
             lc = True
             
         if f_alpha_0 <= f_alpha_L + self.rho*(alpha_0-alpha_L)*df_alpha_L:
