@@ -35,8 +35,8 @@ class Solver(object):
         """
         self.debug = debug
         self.dimensions = len(x0)
-        x0 = np.array(x0).astype(float)
-        x_km1 = np.zeros(self.dimensions)
+        x0 = np.array(x0).astype(float).reshape(self.dimensions,1)
+        x_km1 = np.zeros(self.dimensions).astype(float).reshape(self.dimensions,1)
         x_k = x0
         x_kp1 = x0
         
@@ -113,17 +113,12 @@ class Solver(object):
         a = np.divide(1,u.T@gamma_k) 
         return H + a@(u@gamma_k.T)
 
-    def davidson_fletcher_powell(self,H,x_k,x_km1):
-        x_k.shape = (self.dimensions,1)
-        x_km1.shape = (self.dimensions,1)
+    def davidon_fletcher_powell(self,H,x_k,x_km1):
         delta_k = x_k - x_km1
         gamma_k = self.compute_gradient(x_k)-self.compute_gradient(x_km1)
-        print(gamma_k)
-        print(delta_k)
-        print('d_k@d_kT ' + str(delta_k@delta_k.T))
-        temp_a = sl.inv(delta_k.T@gamma_k)@(delta_k@delta_k.T)
-        temp_b = sl.inv(gamma_k.T@H@gamma_k)@(H@gamma_k@gamma_k.T@H)
-        return H + temp_a - temp_b
+        a = np.outer(delta_k,delta_k)/np.inner(delta_k,gamma_k)
+        b = H@np.outer(gamma_k,gamma_k)@H/(gamma_k.T@H@gamma_k)
+        return H + a - b
     
     def broyden_fletcher_goldfarb_shanno(self,H,x_k,x_km1):
         delta_k = x_k - x_km1 
@@ -138,7 +133,7 @@ class Solver(object):
         method = {'exact_newton' : self.exact_newton,
             'good_broyden' : self.good_broyden,
             'bad_broyden' : self.bad_broyden,
-            'davidson_fletcher_powell' : self.davidson_fletcher_powell,
+            'davidon_fletcher_powell' : self.davidon_fletcher_powell,
             'broyden_fletcher_goldfarb_shanno' : self.broyden_fletcher_goldfarb_shanno,
         }
         return method[quasi_newton_method](H, x_k, x_km1)
@@ -292,7 +287,7 @@ class Solver(object):
         # If not, compute it with finite differences:
         #   g = (f(x+dx) - f(x))/dx
         n = self.dimensions
-        gradient = np.zeros(n)
+        gradient = np.zeros((n,1))
         f = self.objective_function
         fx = f(x) #we only need to calculate this once
         delta = self.grad_tol
@@ -314,7 +309,7 @@ class Solver(object):
         for i in range(n):
             xx = x.copy()
             xx[i] = xx[i] + delta
-            hessian[:,i] = (g(xx) - gx) / delta
+            hessian[:,i] = (g(xx).T - gx[:].T) / delta
         hessian = 1/2*hessian + 1/2*np.conj(hessian.T)
         return hessian
 
