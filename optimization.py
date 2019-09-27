@@ -65,6 +65,7 @@ class Solver(object):
         
         print('Local minima could not be found in ' \
             + str(self.max_iterations) + ' iterations.')
+        
     
     
     # Methods to compute the inverse Hessian. All are accessed through the quasi_newton method below.
@@ -134,10 +135,10 @@ class Solver(object):
         
         guess = 1 # Guess for the scipy optimizer. Don't know what is a reasonable guess. Maybe alpha_k-1. Or just 1?
         
-        alpha_k = scipy.optimize.minimize(step_function, guess, args=(x_k,s_k)) 
-        
+        optimization_res = scipy.optimize.minimize(step_function, guess, args=(x_k,s_k)) #returns some kind of optimization object, so we need to extract the x-value
+        alpha_k = optimization_res.x
         #below returns the new alpha_k. Don't know what is better
-        return self.alpha_k
+        return alpha_k
     
     
     def inexact_line_search(self, line_search_method, x_k, s_k):
@@ -261,7 +262,7 @@ class Solver(object):
         gradient = np.zeros(n)
         f = self.objective_function
         fx = f(x) #we only need to calculate this once
-        delta = 1e-4
+        delta = 1e-1
         for i in range(n):
             x_copy = x.copy()
             x_copy[i] = x_copy[i] + delta
