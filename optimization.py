@@ -33,7 +33,7 @@ class Solver(object):
         self.debug = debug
         self.dimensions = len(x0)
         x0 = np.array(x0).astype(float).reshape(self.dimensions,1)
-        x_km1 = np.zeros(self.dimensions).astype(float).reshape(self.dimensions,1)
+        x_km1 = x0*0
         x_k = x0
         x_kp1 = x0
         
@@ -89,15 +89,15 @@ class Solver(object):
         # increase the readability of the return statement, 
         # which are defined as in the slides
         u = delta_k - H @ gamma_k
-        a = np.divide(1,u.T@gamma_k)
+        a = 1/(u.T@gamma_k)
         return H + a@u@u.T
 
     def bad_broyden(self, H,x_k,x_km1):
         delta_k = x_k - x_km1
         gamma_k = self.compute_gradient(x_k)-self.compute_gradient(x_km1)
         u = delta_k - H @ gamma_k
-        a = np.divide(1,u.T@gamma_k) 
-        return H + a@(u@gamma_k.T)
+        a = 1/(u.T@gamma_k)
+        return H + a*u@gamma_k.T
 
     def davidon_fletcher_powell(self,H,x_k,x_km1):
         delta_k = x_k - x_km1
@@ -109,9 +109,8 @@ class Solver(object):
     def broyden_fletcher_goldfarb_shanno(self,H,x_k,x_km1):
         delta_k = x_k - x_km1 
         gamma_k = self.compute_gradient(x_k) - self.compute_gradient(x_km1)
-        a = (1 + sl.inv(delta_k.T@gamma_k)@(gamma_k.T@H@gamma_k))@\
-            (sl.inv(delta_k.T@gamma_k)@delta_k@delta_k.T)
-        b = sl.inv(delta_k.T@gamma_k)@(delta_k@gamma_k.T@H + H@gamma_k@delta_k.T)
+        a = (1 + (gamma_k.T@H@gamma_k)/delta_k.T@gamma_k)@delta_k@delta_k.T/(delta_k.T@gamma_k)
+        b = (delta_k@gamma_k.T@H + H@gamma_k@delta_k.T)/(delta_k.T@gamma_k)
         return H + a - b
 
     # Python-switch statement that calls the relevant quasi newton method.
@@ -295,7 +294,7 @@ class Solver(object):
         for i in range(n):
             xx = x.copy()
             xx[i] = xx[i] + delta
-            hessian[:,i] = (g(xx).T - gx[:].T) / delta
+            hessian[:,i] = (g(xx).T - gx.T) / (4*delta)
         hessian = 1/2*hessian + 1/2*np.conj(hessian.T)
         return hessian
 
