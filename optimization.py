@@ -10,17 +10,15 @@ import scipy
 
 
 class Problem(object):
-    def __init__(self, objective_function, dimensions, gradient_function=None):
+    def __init__(self, objective_function, gradient_function=None):
         self.objective_function = objective_function
         self.gradient_function = gradient_function
-        self.dimensions = dimensions
         
 
 class Solver(object):
     def __init__(self, problem, tol=1e-6, max_iterations=100):
         self.objective_function = problem.objective_function
         self.gradient_function = problem.gradient_function #(might be equal to None).
-        self.dimensions = problem.dimensions
         self.tol = tol
         self.max_iterations = max_iterations
 
@@ -31,6 +29,7 @@ class Solver(object):
             together with line search.
         """
         self.debug = debug
+        self.dimensions = len(x0)
 
         x_km1 = np.zeros(self.dimensions)
         x_k = x0
@@ -41,7 +40,8 @@ class Solver(object):
         
         for i in range(self.max_iterations):
             if self.debug:
-                print(i)
+                print('iteration: ' + str(i))
+                print('x_k: ' + str(x_k))
                 
             
             s_k = -H @ g #Newton direction
@@ -259,11 +259,12 @@ class Solver(object):
         hessian = np.zeros((n,n))
         g = self.compute_gradient
         gx = g(x) #we only need to calculate this once
-        delta = 1e-4
+        delta = 1e-5
         for i in range(n):
             xx = x.copy()
             xx[i] = xx[i] + delta
             hessian[:,i] = (g(xx) - gx) / delta
+        hessian = 1/2*hessian + 1/2*np.conj(hessian.T)
         return hessian
 
     def is_positive_definite(self, A):                                          #[92%]
