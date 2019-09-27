@@ -4,6 +4,7 @@
                                                                             '''
 import numpy as np
 import scipy.linalg as sl
+import scipy
 
 ''' QUESTIONS '''
 #   - What do we do if G > 0 is not the case when we reach g=0?
@@ -26,7 +27,7 @@ class Solver(object):
         #todo: beräkna G och H0 = G^-1
 
 
-    def find_local_min(self, quasi_newton_method, line_search_method=None, x0):
+    def find_local_min(self, quasi_newton_method, x0, line_search_method=None):
         """Solves the problem of finding a local minimum of the function 
             described in the input problem, using a Quasi-Newton method
             together with line search.
@@ -96,7 +97,7 @@ class Solver(object):
     
     
     
-   def line_search(self, line_search_method, x_k, s_k):
+    def line_search(self, line_search_method, x_k, s_k):
        """
            Returns alpha by the chosen line search method.
        """
@@ -121,7 +122,7 @@ class Solver(object):
         self.alpha_k = scipy.optimize.minimize(step_function, guess, args=(x_k,s_k)) 
         #^above updates the self.alpha_k to be the new one 
         #below returns the new alpha_k. Don't know what is better
-        return alpha_k
+        return self.alpha_k
     
     
     def inexact_line_search(self, line_search_method, x_k, s_k):
@@ -167,7 +168,7 @@ class Solver(object):
                 alpha_0 = bar_alpha_0 #Update the value of alpha_0
                 
             #Compute the function values and their corresponing gradients
-            f_alpha_0, f_alpha_L, df_alpha_0, df_alpha_L = compute_f_and_df(alpha_0, alpha_L)
+            f_alpha_0, f_alpha_L, df_alpha_0, df_alpha_L = self.compute_f_and_df(alpha_0, alpha_L)
             
             #Return the boolean values of lc and rc for the next iteration
             if line_search_method=='Wolfe-Powell':
