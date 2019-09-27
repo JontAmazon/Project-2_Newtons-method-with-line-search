@@ -178,7 +178,7 @@ class Solver(object):
             
         return alpha_0, f_alpha_0
 
-    def compute_f_and_df(self, alpha_0, alpha_L):
+    def compute_f_and_df(self, alpha_0, alpha_L, x_k, s_k):
         '''Computes the function and the corresponding gradient evaluated 
         at alpha_0.
                                                                         '''
