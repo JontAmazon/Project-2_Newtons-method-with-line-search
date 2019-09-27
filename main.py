@@ -14,30 +14,23 @@ def g(x):
 
 
 problem = optimization.Problem(f)
-solver = optimization.Solver(problem)
+solver = optimization.Solver(problem, tol=1e-4)
 
 newton_methods = ['exact_newton', 'good_broyden', 'bad_broyden', \
                   'davidson_fletcher_powell', 'broyden_fletcher_goldfarb_shanno']
 line_search_methods = [None, 'exact_line_search', 'wolfe-powell', 'goldstein']
 
-x0 = [4, 2]
-xx, ffmin = opt.fmin_bfgs(f, x0)
-#x, fmin = solver.find_local_min(newton_methods[0], x0, line_search_methods[0], debug=True)
+x0 = [1, 1]
+#xx, ffmin = opt.fmin_bfgs(f, np.array(x0))
+#optimum = opt.minimize(f, np.array(x0))
+x, fmin = solver.find_local_min(newton_methods[0], x0, line_search_methods[0], debug=True)
 
-
-
-
-
-
-'''TODO = kolla open source exact newton method... '''
 
 
 
 #g = solver.compute_gradient(x0)
 #G = solver.compute_hessian(x0)
 #H = sl.inv(G)
-
-
 
 
 

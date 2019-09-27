@@ -42,6 +42,7 @@ class Solver(object):
             if self.debug:
                 print('iteration: ' + str(i))
                 print('x_k: ' + str(x_k))
+                print('f(x_k): ' + str(self.objective_function(x_k)) + '\n')
                 
             
             s_k = -H @ g #Newton direction
@@ -50,10 +51,14 @@ class Solver(object):
             
             g = self.compute_gradient(x_kp1)
             if sl.norm(g, 2) < self.tol:
+                
+                print('||g|| < tol, lets check if G > 0!\n')
+                
                 G = self.compute_hessian(x_kp1)
                 if self.is_positive_definite(G):
                     print('Local minima found after ' + str(i) + ' iterations.')
                     return x_k, self.objective_function(x_k)
+                
             H = self.quasi_newton(quasi_newton_method, H, x_k, x_km1)
             x_km1 = x_k
             x_k=x_kp1
