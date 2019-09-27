@@ -1,36 +1,37 @@
-'''
+"""
     Script containing an optimization problem class, which contains methods for
     solving optimization problems using different methods
-                                                                            '''
+"""
+
+
 import numpy as np
 import scipy.linalg as sl
-
-''' QUESTIONS '''
-#   - What do we do if G > 0 is not the case when we reach g=0?
+import scipy
 
 
 class Problem(object):
-    def __init__(self, objective_function, dimensions, gradient=None):
+    def __init__(self, objective_function, dimensions, gradient_function=None):
         self.objective_function = objective_function
+        self.gradient_function = gradient_function
         self.dimensions = dimensions
-        self.gradient = gradient #(might be equal to None).
         
 
 class Solver(object):
     def __init__(self, problem, tol=1e-6, max_iterations=100):
         self.objective_function = problem.objective_function
+        self.gradient_function = problem.gradient_function #(might be equal to None).
         self.dimensions = problem.dimensions
-        self.gradient_function = problem.gradient #(might be equal to None).
         self.tol = tol
         self.max_iterations = max_iterations
-        #todo: beräkna G och H0 = G^-1
 
 
-    def find_local_min(self, quasi_newton_method, line_search_method=None, x0):
+    def find_local_min(self, quasi_newton_method, x0, line_search_method=None, debug=False):
         """Solves the problem of finding a local minimum of the function 
             described in the input problem, using a Quasi-Newton method
             together with line search.
         """
+        self.debug = debug
+
         x_km1 = np.zeros(self.dimensions)
         x_k = x0
         x_kp1 = x0
@@ -39,6 +40,10 @@ class Solver(object):
         H = sl.inv(self.compute_hessian(x_k))
         
         for i in range(self.max_iterations):
+            if self.debug:
+                print(i)
+                
+            
             s_k = -H @ g #Newton direction
             alpha = self.line_search(line_search_method, x_k, s_k)
             x_kp1 = x_k + alpha*s_k
@@ -47,8 +52,8 @@ class Solver(object):
             if sl.norm(g, 2) < self.tol:
                 G = self.compute_hessian(x_kp1)
                 if self.is_positive_definite(G):
-                    print('Local minima found!')
-                    return x_k
+                    print('Local minima found after ' + str(i) + ' iterations.')
+                    return x_k, self.objective_function(x_k)
             H = self.quasi_newton(quasi_newton_method, H, x_k, x_km1)
             x_km1 = x_k
             x_k=x_kp1
@@ -58,7 +63,12 @@ class Solver(object):
     
     
     # Methods to compute the inverse Hessian. All are accessed through the quasi_newton method below.
-    def good_broyden(self,H,x_k,x_km1):
+    def exact_newton(self, H, x_k, x_km1):
+        #Of the 3 in-parameters, we only use x_k.
+        G = self.compute_hessian(x_k)
+        return sl.inv(G)
+        
+    def good_broyden(self, H, x_k, x_km1):
         delta_k = x_k - x_km1
         gamma_k = self.compute_gradient(x_k)-self.compute_gradient(x_km1)
         # u and a are just temporary variables used to
@@ -85,18 +95,19 @@ class Solver(object):
         return H + a - b
 
     # Python-switch statement that calls the relevant quasi newton method.
-    def quasi_newton(self, quasi_newton_method, H, x_k, x_km1): # plus fler inparametrar?
-        method = {'good_broyden' : good_broyden,
-            'bad_broyden' : bad_broyden,
-            'davidson_fletcher_powell' : davidson_fletcher_powell,
-            'broyden_fletcher_goldfarb_shanno' : broyden_fletcher_goldfarb_shanno,
+    def quasi_newton(self, quasi_newton_method, H, x_k, x_km1):
+        method = {'exact_newton' : self.exact_newton,
+            'good_broyden' : self.good_broyden,
+            'bad_broyden' : self.bad_broyden,
+            'davidson_fletcher_powell' : self.davidson_fletcher_powell,
+            'broyden_fletcher_goldfarb_shanno' : self.broyden_fletcher_goldfarb_shanno,
         }
-        return method[quasi_newton_method](self,H,x_k,x_km1)
+        return method[quasi_newton_method](H, x_k, x_km1)
         raise Exception('Invalid input for Quasi-Newton method.')
     
     
     
-   def line_search(self, line_search_method, x_k, s_k):
+    def line_search(self, line_search_method, x_k, s_k):
        """
            Returns alpha by the chosen line search method.
        """
@@ -104,10 +115,10 @@ class Solver(object):
            return 1
        if line_search_method=='exact_line_search':
            return self.exact_line_search(x_k, s_k)
-       if line_search_method=='Wolfe-Powell':
-           return self.inexact_line_search('Wolfe-Powell', x_k, s_k)
-       if line_search_method=='Goldstein':
-           return self.inexact_line_search('Goldstein', x_k, s_k)
+       if line_search_method=='wolfe-powell':
+           return self.inexact_line_search('wolfe-powell', x_k, s_k)
+       if line_search_method=='goldstein':
+           return self.inexact_line_search('goldstein', x_k, s_k)
        raise Exception('Invalid input for line search method.')
     
     def exact_line_search(self, x_k, s_k):
@@ -121,7 +132,7 @@ class Solver(object):
         alpha_k = scipy.optimize.minimize(step_function, guess, args=(x_k,s_k)) 
         
         #below returns the new alpha_k. Don't know what is better
-        return alpha_k
+        return self.alpha_k
     
     
     def inexact_line_search(self, line_search_method, x_k, s_k):
@@ -167,18 +178,18 @@ class Solver(object):
                 alpha_0 = bar_alpha_0 #Update the value of alpha_0
                 
             #Compute the function values and their corresponing gradients
-            f_alpha_0, f_alpha_L, df_alpha_0, df_alpha_L = compute_f_and_df(alpha_0, alpha_L)
+            f_alpha_0, f_alpha_L, df_alpha_0, df_alpha_L = self.compute_f_and_df(alpha_0, alpha_L)
             
             #Return the boolean values of lc and rc for the next iteration
-            if line_search_method=='Wolfe-Powell':
+            if line_search_method=='wolfe-powell':
                 lc, rc = self.lc_rc_wolfe_powell(alpha_0, alpha_L, x_k, s_k, f_alpha_0, \
                                         f_alpha_L, df_alpha_0, df_alpha_L)
-            if line_search_method=='Goldstein':
+            if line_search_method=='goldstein':
                 lc, rc = self.lc_rc_goldstein()
             
         return alpha_0, f_alpha_0
 
-    def compute_f_and_df(self, alpha_0, alpha_L):
+    def compute_f_and_df(self, alpha_0, alpha_L, x_k, s_k):
         '''Computes the function and the corresponding gradient evaluated 
         at alpha_0.
                                                                         '''
