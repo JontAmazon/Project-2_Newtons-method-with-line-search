@@ -25,7 +25,7 @@ x, fmin = solver.find_local_min(newton_methods[0], x0, line_search_methods[0], d
 
 
 
-
+this_is_an_extremely_important_constant = 'lol ne'
 
 
 
