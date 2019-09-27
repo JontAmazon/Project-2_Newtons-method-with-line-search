@@ -26,7 +26,7 @@ class Solver(object):
         #todo: beräkna G och H0 = G^-1
 
 
-    def find_local_min(self, quasi_newton_method, line_search_method, x0):
+    def find_local_min(self, quasi_newton_method, line_search_method=None, x0):
         """Solves the problem of finding a local minimum of the function 
             described in the input problem, using a Quasi-Newton method
             together with line search.
@@ -40,7 +40,7 @@ class Solver(object):
         
         for i in range(self.max_iterations):
             s_k = -H @ g #Newton direction
-            alpha = self.line_search(line_search_method) # plus fler inparametrar
+            alpha = self.line_search(line_search_method, x_k, s_k)
             x_kp1 = x_k + alpha*s_k
             
             g = self.compute_gradient(x_kp1)
@@ -49,7 +49,7 @@ class Solver(object):
                 if self.is_positive_definite(G):
                     print('Local minima found!')
                     return x_k
-            H = self.quasi_newton(quasi_newton_method, H, x_k, x_km1) # plus fler inparametrar?
+            H = self.quasi_newton(quasi_newton_method, H, x_k, x_km1)
             x_km1 = x_k
             x_k=x_kp1
         
@@ -92,8 +92,25 @@ class Solver(object):
             'broyden_fletcher_goldfarb_shanno' : broyden_fletcher_goldfarb_shanno,
         }
         return method[quasi_newton_method](self,H,x_k,x_km1)
+        raise Exception('Invalid input for Quasi-Newton method.')
     
-    def line_search_exact(self, x_k, s_k):
+    
+    
+   def line_search(self, line_search_method, x_k, s_k):
+       """
+           Returns alpha by the chosen line search method.
+       """
+       if line_search_method==None:
+           return 1
+       if line_search_method=='exact_line_search':
+           return self.exact_line_search(x_k, s_k)
+       if line_search_method=='Wolfe-Powell':
+           return self.inexact_line_search('Wolfe-Powell', x_k, s_k)
+       if line_search_method=='Goldstein':
+           return self.inexact_line_search('Goldstein', x_k, s_k)
+       raise Exception('Invalid input for line search method.')
+    
+    def exact_line_search(self, x_k, s_k):
     # exact line search method, gives alphak
         
         def step_function(alpha, x_k, s_k):
@@ -106,49 +123,12 @@ class Solver(object):
         #below returns the new alpha_k. Don't know what is better
         return alpha_k
     
-    def line_search_inexact(self, x_k, s_k):
-        # Inexact line search method for computing alpha^(k)
-        
-        def lc_rc_wolfe_powell(self, alpha_0, alpha_L, x_k, s_k, f_alpha_0, \
-                               f_alpha_L, df_alpha_0, df_alpha_L):
-            '''
-            Returns lc = True and rc = True if the Wolfe-Powell conditions
-            are fulfilled for alpha_0 and alpha_L.
-                                                                            '''                
-            #Define the boolean return variables
-            lc = False
-            rc = False
-                
-            if df_alpha_0 >= self.sigma * df_alpha_L:
-                lc = True
-        
-            if f_alpha_0 <= f_alpha_L + self.rho*(alpha_0 - alpha_L)*df_alpha_L:
-                rc = True
-                
-            #TODO: Should we use the strong Wolfe condition as well?
-                    
-            return lc, rc
-        
-        
-        def compute_f_and_df(self, alpha_0, alpha_L):
-            '''Computes the function and the corresponding gradient evaluated 
-            at alpha_0.
-                                                                            '''
-            #Define the values on which to evaluate the function and the gradient
-            alpha_0_eval = x_k + alpha_0 * s_k
-            alpha_L_eval = x_k + alpha_L * s_k
-            
-            #Evaluate the gradient for the two points defined above (using the chain rule, thus s_k)
-            df_alpha_0 = self.compute_gradient(alpha_0_eval).T * s_k
-            df_alpha_L = self.compute_gradient(alpha_L_eval).T * s_k
-            
-            #Evaluate the function in the same points
-            f_alpha_0 = self.objective_function(alpha_0_eval)
-            f_alpha_L = self.objective_function(alpha_L_eval)
-            
-            return f_alpha_0, f_alpha_L, df_alpha_0, df_alpha_L
-        
-            
+    
+    def inexact_line_search(self, line_search_method, x_k, s_k):
+        """
+            Inexact line search method for computing alpha^(k), using either 
+            Wolfe-Powell or Goldstein conditions.
+        """
         #Define the default values for the method parameters
         self.rho = 0.1
         self.sigma = 0.7
@@ -171,10 +151,8 @@ class Solver(object):
         rc = False
             
         while (not lc and not rc):
-                
             if not lc:
                 #Implementation of Block 1 in the slides
-                    
                 delta_alpha_0 = (alpha_0, alpha_L)*df_alpha_0/(df_alpha_L - df_alpha_0) #Compute delta(alpha_0) by extrapolation
                 delta_alpha_0 = np.max(delta_alpha_0, self.tao*(alpha_L - alpha_L)) #Make sure delta_alpha_0 is not too small
                 delta_alpha_0 = np.min(delta_alpha_0, self.chi*(alpha_L - alpha_L)) #Make sure delta_alpha_0 is not too large
@@ -182,7 +160,6 @@ class Solver(object):
                 alpha_0 = alpha_0 + delta_alpha_0#Update the value of alpha_0
             else:
                 #Implementation of Block 2 in the slides
-                    
                 alpha_U = np.min(alpha_0, alpha_U) #Update the lower bound
                 bar_alpha_0 = ((alpha_0 - alpha_L)**2)*df_alpha_L/2*(f_alpha_L - f_alpha_0 + (alpha_0 - alpha_L)*df_alpha_L) #Compute bar(alpha_0) by interpolation
                 bar_alpha_0 = np.max(bar_alpha_0, alpha_L + self.tao*(alpha_L - alpha_L)) #Make sure bar_alpha_0 is not too small
@@ -193,16 +170,57 @@ class Solver(object):
             f_alpha_0, f_alpha_L, df_alpha_0, df_alpha_L = compute_f_and_df(alpha_0, alpha_L)
             
             #Return the boolean values of lc and rc for the next iteration
-            lc, rc = lc_rc_wolfe_powell(alpha_0, alpha_L, x_k, s_k, f_alpha_0, \
-                                    f_alpha_L, df_alpha_0, df_alpha_L)
-        
+            if line_search_method=='Wolfe-Powell':
+                lc, rc = self.lc_rc_wolfe_powell(alpha_0, alpha_L, x_k, s_k, f_alpha_0, \
+                                        f_alpha_L, df_alpha_0, df_alpha_L)
+            if line_search_method=='Goldstein':
+                lc, rc = self.lc_rc_goldstein()
+            
         return alpha_0, f_alpha_0
+
+    def compute_f_and_df(self, alpha_0, alpha_L):
+        '''Computes the function and the corresponding gradient evaluated 
+        at alpha_0.
+                                                                        '''
+        #Define the values on which to evaluate the function and the gradient
+        alpha_0_eval = x_k + alpha_0 * s_k
+        alpha_L_eval = x_k + alpha_L * s_k
+        
+        #Evaluate the gradient for the two points defined above (using the chain rule, thus s_k)
+        df_alpha_0 = self.compute_gradient(alpha_0_eval).T * s_k
+        df_alpha_L = self.compute_gradient(alpha_L_eval).T * s_k
+        
+        #Evaluate the function in the same points
+        f_alpha_0 = self.objective_function(alpha_0_eval)
+        f_alpha_L = self.objective_function(alpha_L_eval)
+        
+        return f_alpha_0, f_alpha_L, df_alpha_0, df_alpha_L
     
-   def line_search(self, line_search_method, x_k, s_k): # plus fler inparametrar
-           method = {'line_search_inexact' : line_search_inexact,
-           'line_search_exact' : line_search_exact,
-           }
-           return method[line_search_method](self,x_k,s_k)
+
+    def lc_rc_wolfe_powell(self, alpha_0, alpha_L, x_k, s_k, f_alpha_0, \
+                           f_alpha_L, df_alpha_0, df_alpha_L):
+        '''
+        Returns lc = True and rc = True if the Wolfe-Powell conditions
+        are fulfilled for alpha_0 and alpha_L.
+                                                                        '''                
+        #Define the boolean return variables
+        lc = False
+        rc = False
+            
+        if df_alpha_0 >= self.sigma * df_alpha_L:
+            lc = True
+    
+        if f_alpha_0 <= f_alpha_L + self.rho*(alpha_0 - alpha_L)*df_alpha_L:
+            rc = True
+            
+        #TODO: Should we use the strong Wolfe condition as well?
+                
+        return lc, rc
+
+    def lc_rc_goldstein(self):
+        '''TODO'''
+        pass
+
 
     def compute_gradient(self, x):
         # Do we have an explicit function for the gradient? Then use it!
