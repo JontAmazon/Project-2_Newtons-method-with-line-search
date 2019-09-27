@@ -25,4 +25,6 @@ class test_gradient(unittest.TestCase):
         self.grad = np.array([100*(4*x[0]**3-4*x[0]*x[1])-2+2*x[0],100*(2*x[1]-2*x[0]**2)])
     def test(self):
         self.assertAlmostEqual(self.grad,self.gradient)
-      
+        
+if __name__ =='__main__':
+    unittest.main()
