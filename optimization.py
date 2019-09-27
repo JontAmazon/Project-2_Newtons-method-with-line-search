@@ -32,13 +32,15 @@ class Solver(object):
         """
         self.debug = debug
         self.dimensions = len(x0)
-
+        x0 = np.array(x0).astype(float)
         x_km1 = np.zeros(self.dimensions)
         x_k = x0
         x_kp1 = x0
         
         g = self.compute_gradient(x_k)
-        H = sl.inv(self.compute_hessian(x_k))
+        G = self.compute_hessian(x_k)
+
+        H = sl.inv(G)
         
         for i in range(self.max_iterations):
             if self.debug:
@@ -84,19 +86,30 @@ class Solver(object):
         delta_k = x_k - x_km1
         gamma_k = self.compute_gradient(x_k)-self.compute_gradient(x_km1)
         # u and a are just temporary variables used to
-        # increase the readability of the return statement
+        # increase the readability of the return statement, 
+        # which are defined as in the slides
         u = delta_k - H @ gamma_k
         a = np.divide(1,u.T@gamma_k)
         return H + a@u@u.T
 
     def bad_broyden(self, H,x_k,x_km1):
-        return sl.inv(self.compute_hessian(x_k))
-
-    def davidson_fletcher_powell(self,H,x_k,x_km1):
         delta_k = x_k - x_km1
         gamma_k = self.compute_gradient(x_k)-self.compute_gradient(x_km1)
-        return H + sl.inv(delta_k.T@gamma_k)@(delta_k@delta_k.T) - \
-            sl.inv(gamma_k.T@H@gamma_k)@(H@gamma_k@gamma_k.T@H)
+        u = delta_k - H @ gamma_k
+        a = np.divide(1,u.T@gamma_k) 
+        return H + a@(u@gamma_k.T)
+
+    def davidson_fletcher_powell(self,H,x_k,x_km1):
+        x_k.shape = (self.dimensions,1)
+        x_km1.shape = (self.dimensions,1)
+        delta_k = x_k - x_km1
+        gamma_k = self.compute_gradient(x_k)-self.compute_gradient(x_km1)
+        print(gamma_k)
+        print(delta_k)
+        print('d_k@d_kT ' + str(delta_k@delta_k.T))
+        temp_a = sl.inv(delta_k.T@gamma_k)@(delta_k@delta_k.T)
+        temp_b = sl.inv(gamma_k.T@H@gamma_k)@(H@gamma_k@gamma_k.T@H)
+        return H + temp_a - temp_b
     
     def broyden_fletcher_goldfarb_shanno(self,H,x_k,x_km1):
         delta_k = x_k - x_km1 
@@ -247,7 +260,7 @@ class Solver(object):
         lc = False
         rc = False
         
-        if f_alpha_0 >= f_alpha_l + (1-self.rho)*(alpha_0-alpha_L)*df_alpha_L:
+        if f_alpha_0 >= f_alpha_L + (1-self.rho)*(alpha_0-alpha_L)*df_alpha_L:
             lc = True
             
         if f_alpha_0 <= f_alpha_L + self.rho*(alpha_0-alpha_L)*df_alpha_L:
