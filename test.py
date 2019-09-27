@@ -5,6 +5,7 @@ import unittest
 import optimization as op
 import matplotlib.pyplot as plt
 from timeit import default_timer as timer
+import scipy.linalg as lg
 
 
 '''
@@ -18,7 +19,7 @@ class test_gradient(unittest.TestCase):
         x = np.array([4., 2.])
         def f(x):
             return 100*(x[1] - x[0]**2)**2 + (1 - x[0])**2
-        problem = op.Problem(f, 2)
+        problem = op.Problem(f)
         solver = op.Solver(problem)
         self.gradient = solver.compute_gradient(x)
         g1 = self.gradient
