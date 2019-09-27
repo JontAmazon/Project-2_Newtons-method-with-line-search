@@ -16,10 +16,12 @@ class Problem(object):
         
 
 class Solver(object):
-    def __init__(self, problem, tol=1e-6, max_iterations=100):
+    def __init__(self, problem, tol=1e-6, max_iterations=100, grad_tol=1e-4, hess_tol=1e-5):
         self.objective_function = problem.objective_function
         self.gradient_function = problem.gradient_function #(might be equal to None).
         self.tol = tol
+        self.grad_tol = grad_tol
+        self.hess_tol = hess_tol
         self.max_iterations = max_iterations
 
 
@@ -42,7 +44,11 @@ class Solver(object):
             if self.debug:
                 print('iteration: ' + str(i))
                 print('x_k: ' + str(x_k))
-                print('f(x_k): ' + str(self.objective_function(x_k)) + '\n')
+                print('f(x_k): ' + str(self.objective_function(x_k)))
+                print('||g||: ' + str(sl.norm(g,2)))
+                print('g(x_k): ' +  str(g))
+                print('H(x_k): ' + str(H) + '\n')
+                
                 
             
             s_k = -H @ g #Newton direction
@@ -262,7 +268,7 @@ class Solver(object):
         gradient = np.zeros(n)
         f = self.objective_function
         fx = f(x) #we only need to calculate this once
-        delta = 1e-1
+        delta = self.grad_tol
         for i in range(n):
             x_copy = x.copy()
             x_copy[i] = x_copy[i] + delta
@@ -277,7 +283,7 @@ class Solver(object):
         hessian = np.zeros((n,n))
         g = self.compute_gradient
         gx = g(x) #we only need to calculate this once
-        delta = 1e-5
+        delta = self.hess_tol
         for i in range(n):
             xx = x.copy()
             xx[i] = xx[i] + delta
