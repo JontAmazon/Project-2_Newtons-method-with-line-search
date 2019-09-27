@@ -35,34 +35,43 @@ class Solver(object):
         """
         self.debug = debug
         self.dimensions = len(x0)
+
+        if self.debug:
+            def gradient(x):
+                grad = np.zeros((2,1))
+                grad[0,0] = 400*x[0]**3 - 400*x[0]*x[1] + 2*x[0] - 2
+                grad[1,0] = -200*x[0]**2 + 200*x[1]
+                return grad
+            
+            def G(x):
+                hess = np.zeros((2,2))
+                hess[0,0] = 1200*x[0]**2 - 400*x[1] + 2
+                hess[0,1] = hess[1,0] = -400*x[0]
+                hess[1,1] = 200
+                return hess
+            
+
         x0 = np.array(x0).astype(float).reshape(self.dimensions,1)
         x_km1 = x0*0
         x_k = x0
         x_kp1 = x0
         
         g = self.compute_gradient(x_k)
-        G = self.compute_hessian(x_k)
-
-        H = sl.inv(G)
-        
-        if debug:
-            def gradient(x):
-                grad = np.zeros(2)
-                grad[0] = 400*x[0]**3 - 400*x[0]*x[1] + 2*x[0] - 2
-                grad[1] = -200*x[0]**2 + 200*x[1]
-                return grad
-
+        H = sl.inv(self.compute_hessian(x_k))
         
         for i in range(self.max_iterations):
             if self.debug:
-                gradient_by_function = gradient(x_k)
-                
                 print('iteration: ' + str(i))
-                print('x_k: ' + str(x_k))
-                print('f(x_k): ' + str(self.objective_function(x_k)))
-                print('||g||: ' + str(sl.norm(g,2)))
-                print('g(x_k): ' +  str(g))
-                print('g(x_k) correct: ' + str(gradient_by_function) + '\n')
+                print('x_k: ' + str(x_k.T))
+                print('f(x_k): ' + str(self.objective_function(x_k)))                
+                print('||g - g_correct||: ' + str(sl.norm(g - gradient(x_k), 2)))
+#                print(g)
+#                print(gradient(x_k))                
+                print('||H - H_correct||: ' + str(sl.norm(H - sl.inv(G(x_k)), 2)))
+                print()
+#                print('||g||: ' + str(sl.norm(g,2)))
+#                print('g(x_k): ' +  str(g))
+#                print('g(x_k) correct: ' + str(g(x_k)) + '\n')
 #                print('H(x_k): ' + str(H) + '\n')
                 
                 
@@ -73,14 +82,12 @@ class Solver(object):
             
             g = self.compute_gradient(x_kp1)
             if sl.norm(g, 2) < self.tol:
-                
-                print('||g|| < tol, lets check if G > 0!\n')
-                
+                print('||g|| < tol, lets check if G > 0')
                 G = self.compute_hessian(x_kp1)
                 if self.is_positive_definite(G):
                     print('Local minima found after ' + str(i) + ' iterations.')
                     return x_k, self.objective_function(x_k)
-                
+                print('Sadly, it was the case that ||g|| < 0.\n')
             H = self.quasi_newton(quasi_newton_method, H, x_k, x_km1)
             x_km1 = x_k
             x_k=x_kp1
@@ -93,8 +100,7 @@ class Solver(object):
     # Methods to compute the inverse Hessian. All are accessed through the quasi_newton method below.
     def exact_newton(self, H, x_k, x_km1):
         #Of the 3 in-parameters, we only use x_k.
-        G = self.compute_hessian(x_k)
-        return sl.inv(G)
+        return sl.inv(self.compute_hessian(x_k))
         
     def good_broyden(self, H, x_k, x_km1):
         delta_k = x_k - x_km1
@@ -283,17 +289,19 @@ class Solver(object):
         if self.gradient_function != None:
             return self.gradient_function(x)
         
-        # If not, compute it with finite differences:
-        #   g = (f(x+dx) - f(x))/dx
+        # If not, compute it with central finite differences:
+        #   g = (f(x+dx) - f(x-dx))/(2*dx)
         n = self.dimensions
         gradient = np.zeros((n,1))
         f = self.objective_function
-        fx = f(x) #we only need to calculate this once
+        #fx = f(x) #we only need to calculate this once
         delta = self.grad_tol
         for i in range(n):
-            x_copy = x.copy()
-            x_copy[i] = x_copy[i] + delta
-            gradient[i] = (f(x_copy) - fx) / delta
+            x1 = x.copy()
+            x2 = x.copy()
+            x1[i] = x1[i] + delta
+            x2[i] = x2[i] - delta
+            gradient[i,0] = (f(x1) - f(x2)) / (2*delta)
         return gradient
     
     def compute_hessian(self, x):
@@ -303,12 +311,14 @@ class Solver(object):
         n = self.dimensions
         hessian = np.zeros((n,n))
         g = self.compute_gradient
-        gx = g(x) #we only need to calculate this once
+        #gx = g(x) #we only need to calculate this once
         delta = self.hess_tol
         for i in range(n):
-            xx = x.copy()
-            xx[i] = xx[i] + delta
-            hessian[:,i] = (g(xx).T - gx.T) / (4*delta)
+            x1 = x.copy()
+            x2 = x.copy()
+            x1[i] = x1[i] + delta
+            x2[i] = x2[i] - delta            
+            hessian[:,i] = ((g(x1) - g(x2)) / (2*delta)).T
         hessian = 1/2*hessian + 1/2*np.conj(hessian.T)
         return hessian
 
