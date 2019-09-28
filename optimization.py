@@ -41,6 +41,7 @@ class Solver(object):
                 grad = np.zeros((2,1))
                 grad[0,0] = 400*x[0]**3 - 400*x[0]*x[1] + 2*x[0] - 2
                 grad[1,0] = -200*x[0]**2 + 200*x[1]
+                print('grad '+ str(grad))
                 return grad
             
             def G(x):
@@ -51,7 +52,7 @@ class Solver(object):
                 return hess
             
 
-        x0 = np.array(x0).astype(float).reshape(self.dimensions,1)
+        x0 = np.array(x0).astype(float)
         x_km1 = x0*0
         x_k = x0
         x_kp1 = x0
@@ -98,6 +99,7 @@ class Solver(object):
         return sl.inv(self.compute_hessian(x_k))
         
     def good_broyden(self, H, x_k, x_km1):
+        print('x_k ' +str(x_k))
         delta_k = x_k - x_km1
         gamma_k = self.compute_gradient(x_k)-self.compute_gradient(x_km1)
         # u and a are just temporary variables used to
@@ -189,7 +191,7 @@ class Solver(object):
         #ALTERNATIVELY: alpha_0 = np.random.rand(alpha_L, alpha_U, 1)
             
         #Compute the initial values of the function and the corresponding gradients
-        f_alpha_0, f_alpha_L, df_alpha_0, df_alpha_L = self.compute_f_and_df(alpha_0, alpha_L)
+        f_alpha_0, f_alpha_L, df_alpha_0, df_alpha_L = self.compute_f_and_df(alpha_0, alpha_L,x_k,s_k)
             
         #Initiate the boolean values of lc and rc 
         lc = False
@@ -198,8 +200,11 @@ class Solver(object):
         while (not lc and not rc):
             if not lc:
                 #Implementation of Block 1 in the slides
-                delta_alpha_0 = (alpha_0, alpha_L)*df_alpha_0/(df_alpha_L - df_alpha_0) #Compute delta(alpha_0) by extrapolation
-                delta_alpha_0 = np.max(delta_alpha_0, self.tao*(alpha_L - alpha_L)) #Make sure delta_alpha_0 is not too small
+                print('dfa0 ' + str(df_alpha_0))
+                print('a0 ' + str(alpha_0))
+                delta_alpha_0 = (alpha_0 - alpha_L)*df_alpha_0/(df_alpha_L - df_alpha_0) #Compute delta(alpha_0) by extrapolation
+                print('delta ' +str(delta_alpha_0))
+                delta_alpha_0 = np.max((delta_alpha_0, self.tao*(alpha_L - alpha_L))) #Make sure delta_alpha_0 is not too small
                 delta_alpha_0 = np.min(delta_alpha_0, self.chi*(alpha_L - alpha_L)) #Make sure delta_alpha_0 is not too large
                 alpha_L = np.copy(alpha_0) #Assign the value of alpha_0 to alpha_L
                 alpha_0 = alpha_0 + delta_alpha_0#Update the value of alpha_0
@@ -212,7 +217,7 @@ class Solver(object):
                 alpha_0 = bar_alpha_0 #Update the value of alpha_0
                 
             #Compute the function values and their corresponing gradients
-            f_alpha_0, f_alpha_L, df_alpha_0, df_alpha_L = self.compute_f_and_df(alpha_0, alpha_L)
+            f_alpha_0, f_alpha_L, df_alpha_0, df_alpha_L = self.compute_f_and_df(alpha_0, alpha_L,x_k,s_k)
             
             #Return the boolean values of lc and rc for the next iteration
             if line_search_method=='wolfe-powell':
@@ -291,12 +296,14 @@ class Solver(object):
         f = self.objective_function
         #fx = f(x) #we only need to calculate this once
         delta = self.grad_tol
+        print('x ' + str(x))
+        print('f ' + str(f(x)))
         for i in range(n):
             x1 = x.copy()
             x2 = x.copy()
             x1[i] = x1[i] + delta
             x2[i] = x2[i] - delta
-            gradient[i,0] = (f(x1) - f(x2)) / (2*delta)
+            gradient[i][0] = (f(x1) - f(x2)) / (2*delta)
         return gradient
     
     def compute_hessian(self, x):
