@@ -35,7 +35,7 @@ line_search_methods = [None, 'exact_line_search', 'wolfe-powell', 'goldstein']
 x0 = [76, 1000.0]    #1e-8   1e-5
 #x0 = [10, 10]
 #x0 = [37, 100] #1e-6   1e-3
-x, fmin = solver.find_local_min(newton_methods[1], x0, line_search_methods[2], debug=True)
+x, fmin = solver.find_local_min(newton_methods[1], x0, line_search_methods[1], debug=True)
 
 
 #blip = solver.compute_gradient(x0)

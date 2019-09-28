@@ -59,17 +59,16 @@ class Solver(object):
         
         g = self.compute_gradient(x_k)
         H = sl.inv(self.compute_hessian(x_k))
-        
+        print('before loop ' + str(x_k))
         for i in range(self.max_iterations):
             if self.debug:
                 print('                   #' + str(i))
-                print('x_k:               ' + str(x_k.T))
+                print('x_k:               ' + str(x_k.T[0]))
                 print('f(x_k):            ' + str(self.objective_function(x_k)))                
                 print('||g||:             ' + str(sl.norm(g,2)))
                 print('||g_correct||:     ' + str(sl.norm(gradient(x_k),2)))
                 print('||H||:             ' + str(sl.norm(H,2)))
-                print('||H_correct||:     ' + str(sl.norm(sl.inv(G(x_k)), 2)))
-                print()
+                print('H : ' + str(H))
 
             if sl.norm(g, 2) < self.tol:
                 print('||g|| < tol ==> We are done if only G > 0')
@@ -79,14 +78,10 @@ class Solver(object):
                     return x_k, self.objective_function(x_k)
                 print('Sadly, it was not the case.\n')
             print('blebleble')
-            s_k = -H @ g #Newton direction
+            s_k = -(H @ g) #Newton direction
             alpha = self.line_search(line_search_method, x_k, s_k)
             x_kp1 = x_k + alpha*s_k
-#            print('g in loop 1' + str(g))
-#            print('x_kp1 in loop ' + str(x_kp1))
-#            print('alpha in loop ' + str(alpha))
             g = self.compute_gradient(x_kp1)
-#            print('g in loop 2' + str(g))
             H = self.quasi_newton(quasi_newton_method, H, x_k, x_km1)
             x_km1 = x_k
             x_k=x_kp1
@@ -102,35 +97,44 @@ class Solver(object):
         return sl.inv(self.compute_hessian(x_k))
         
     def good_broyden(self, H, x_k, x_km1):
-        print('x_k ' +str(x_k))
-        delta_k = x_k - x_km1
+        # Superposition of np column "matrix" results in concatenation,
+        # so we need to transpose delta_k to row matrix and then transpose back
+        delta_k = (x_k.T - x_km1.T).T
         gamma_k = self.compute_gradient(x_k)-self.compute_gradient(x_km1)
         # u and a are just temporary variables used to
         # increase the readability of the return statement, 
         # which are defined as in the slides
-        u = delta_k - H @ gamma_k
-        a = 1/(u.T@gamma_k)
-        return H + a@u@u.T
+        u = (delta_k.T - (H @ gamma_k).T).T
+        a = float(1/(u.T@gamma_k))
+        return H + a*u@u.T
 
     def bad_broyden(self, H,x_k,x_km1):
-        delta_k = x_k - x_km1
+        # Superposition of np column "matrix" results in concatenation,
+        # so we need to transpose delta_k to row matrix and then transpose back
+        delta_k = (x_k.T - x_km1.T).T
         gamma_k = self.compute_gradient(x_k)-self.compute_gradient(x_km1)
         u = delta_k - H @ gamma_k
-        a = 1/(u.T@gamma_k)
+        a = float(1/(gamma_k.T@gamma_k))
         return H + a*u@gamma_k.T
 
     def davidon_fletcher_powell(self,H,x_k,x_km1):
-        delta_k = x_k - x_km1
+        # Superposition of np column "matrix" results in concatenation,
+        # so we need to transpose delta_k to row matrix and then transpose back
+        delta_k = (x_k.T - x_km1.T).T
         gamma_k = self.compute_gradient(x_k)-self.compute_gradient(x_km1)
         a = np.outer(delta_k,delta_k)/np.inner(delta_k,gamma_k)
         b = H@np.outer(gamma_k,gamma_k)@H/(gamma_k.T@H@gamma_k)
         return H + a - b
     
     def broyden_fletcher_goldfarb_shanno(self,H,x_k,x_km1):
-        delta_k = x_k - x_km1 
+        # Superposition of np column "matrix" results in concatenation,
+        # so we need to transpose delta_k to row matrix and then transpose back
+        delta_k = (x_k.T - x_km1.T).T
         gamma_k = self.compute_gradient(x_k) - self.compute_gradient(x_km1)
-        a = (1 + (gamma_k.T@H@gamma_k)/delta_k.T@gamma_k)@delta_k@delta_k.T/(delta_k.T@gamma_k)
-        b = (delta_k@gamma_k.T@H + H@gamma_k@delta_k.T)/(delta_k.T@gamma_k)
+        inner = float(gamma_k.T@H@gamma_k/(float(delta_k.T@gamma_k)))
+        outer = (delta_k@delta_k.T)/float(delta_k.T@gamma_k)
+        a = (1+inner)*outer
+        b = (delta_k@gamma_k.T@H + H@gamma_k@delta_k.T)/(float(delta_k.T@gamma_k))
         return H + a - b
 
     # Python-switch statement that calls the relevant quasi newton method.
@@ -165,11 +169,9 @@ class Solver(object):
         
         def step_function(alpha, x_k, s_k):
             return self.objective_function(x_k + alpha*s_k)
-        
+        x_copy = x_k.copy().reshape(self.dimensions,1)
         guess = 1 # Guess for the scipy optimizer. Don't know what is a reasonable guess. Maybe alpha_k-1. Or just 1?
-#        print('x_k in exactlinesearc ' + str(x_k))
-#        print('s_k in exactlinesearc ' + str(s_k))
-        optimization_res = scipy.optimize.minimize(step_function, guess, args=(x_k,s_k)) #returns some kind of optimization object, so we need to extract the x-value
+        optimization_res = scipy.optimize.minimize(step_function, guess, args=(x_copy,s_k)) #returns some kind of optimization object, so we need to extract the x-value
         alpha_k = optimization_res.x
         #below returns the new alpha_k. Don't know what is better
         return alpha_k
@@ -245,19 +247,11 @@ class Solver(object):
         #Define the values on which to evaluate the function and the gradient
         alpha_0_eval = x_copy + alpha_0 * s_k
         alpha_L_eval = x_copy + alpha_L * s_k
-#        print('alpha_0_eval in computefanddf ' + str(alpha_0_eval))
         
         #Evaluate the gradient for the two points defined above (using the chain rule, thus s_k)
         g0l = self.compute_gradient(alpha_0_eval)
-#        print('g0l ' + str(g0l.T))
-#        print('s_k ' + str(s_k))
-        k = g0l.T@s_k
-#        print(k[0])
         df_alpha_0 = float(self.compute_gradient(alpha_0_eval).T @ s_k)
         df_alpha_L = float(self.compute_gradient(alpha_L_eval).T @ s_k)
-#        print(type(df_alpha_0))
-#        print('df_alpha_0 ' + str(df_alpha_0))
-        
         #Evaluate the function in the same points
         f_alpha_0 = float(self.objective_function(alpha_0_eval))
         f_alpha_L = float(self.objective_function(alpha_L_eval))
@@ -292,7 +286,7 @@ class Solver(object):
         lc = False
         rc = False
         
-        if f_alpha_0 >= f_alpha_l + (1-self.rho)*(alpha_0-alpha_L)*df_alpha_L:
+        if f_alpha_0 >= f_alpha_L + (1-self.rho)*(alpha_0-alpha_L)*df_alpha_L:
             lc = True
             
         if f_alpha_0 <= f_alpha_L + self.rho*(alpha_0-alpha_L)*df_alpha_L:
@@ -308,14 +302,10 @@ class Solver(object):
             return self.gradient_function(x)
         
         # If not, compute it with central finite differences:
-        #   g = (f(x+dx) - f(x-dx))/(2*dx)
         n = self.dimensions
         gradient = np.zeros((n,1))
         f = self.objective_function
-        #fx = f(x) #we only need to calculate this once
         delta = self.grad_tol
-#        print('x ' + str(x))
-#        print('f ' + str(f(x)))
         for i in range(n):
             x1 = x.copy()
             x2 = x.copy()
@@ -331,7 +321,6 @@ class Solver(object):
         n = self.dimensions
         hessian = np.zeros((n,n))
         g = self.compute_gradient
-        #gx = g(x) #we only need to calculate this once
         delta = self.hess_tol
         for i in range(n):
             x1 = x.copy()
