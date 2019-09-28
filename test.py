@@ -40,7 +40,10 @@ class test_gradient(unittest.TestCase):
     def test_correct_value(self):
         
         self.assertAlmostEqual(self.diff,0,1) #'not almost equal'
-        
+    def test_exact_newton(self):
+        x0 = [1.,1.]
+        x, fmin = solver.find_local_min(newton_methods[0], x0, line_search_methods[0], debug=True)
+
         
 
         
