@@ -196,37 +196,42 @@ class Solver(object):
         #Initiate the boolean values of lc and rc 
         lc = False
         rc = False
+         #Check if the conditions are fullfilled, return booleans lc and rc
+        if line_search_method=='wolfe-powell':
+            lc, rc = self.lc_rc_wolfe_powell(alpha_0, alpha_L, x_k, s_k, f_alpha_0, \
+                                        f_alpha_L, df_alpha_0, df_alpha_L)
+        if line_search_method=='goldstein':
+            lc, rc = self.lc_rc_goldstein(alpha_0, alpha_L, x_k, s_k, f_alpha_0, \
+                                        f_alpha_L, df_alpha_0, df_alpha_L)
             
-        while (not lc and not rc):
+        while (not lc or not rc):
             if not lc:
                 #Implementation of Block 1 in the slides
-                print('dfa0 ' + str(df_alpha_0))
-                print('a0 ' + str(alpha_0))
                 delta_alpha_0 = (alpha_0 - alpha_L)*df_alpha_0/(df_alpha_L - df_alpha_0) #Compute delta(alpha_0) by extrapolation
-                print('delta ' +str(delta_alpha_0))
-                delta_alpha_0 = np.max((delta_alpha_0, self.tao*(alpha_L - alpha_L))) #Make sure delta_alpha_0 is not too small
-                delta_alpha_0 = np.min(delta_alpha_0, self.chi*(alpha_L - alpha_L)) #Make sure delta_alpha_0 is not too large
+                delta_alpha_0 = np.max([delta_alpha_0, self.tao*(alpha_0 - alpha_L)]) #Make sure delta_alpha_0 is not too small
+                delta_alpha_0 = np.min([delta_alpha_0, self.chi*(alpha_0 - alpha_L)]) #Make sure delta_alpha_0 is not too large
                 alpha_L = np.copy(alpha_0) #Assign the value of alpha_0 to alpha_L
                 alpha_0 = alpha_0 + delta_alpha_0#Update the value of alpha_0
             else:
                 #Implementation of Block 2 in the slides
-                alpha_U = np.min(alpha_0, alpha_U) #Update the lower bound
+                alpha_U = np.min([alpha_0, alpha_U]) #Update the lower bound
                 bar_alpha_0 = ((alpha_0 - alpha_L)**2)*df_alpha_L/2*(f_alpha_L - f_alpha_0 + (alpha_0 - alpha_L)*df_alpha_L) #Compute bar(alpha_0) by interpolation
-                bar_alpha_0 = np.max(bar_alpha_0, alpha_L + self.tao*(alpha_L - alpha_L)) #Make sure bar_alpha_0 is not too small
-                bar_alpha_0 = np.min(bar_alpha_0, alpha_U - self.tao*(alpha_L - alpha_L)) #Make sure bar_alpha_0 is not too large
-                alpha_0 = bar_alpha_0 #Update the value of alpha_0
+                bar_alpha_0 = np.max([bar_alpha_0, alpha_L + self.tao*(alpha_U - alpha_L)]) #Make sure bar_alpha_0 is not too small
+                bar_alpha_0 = np.min([bar_alpha_0, alpha_U - self.tao*(alpha_U - alpha_L)]) #Make sure bar_alpha_0 is not too large
+                alpha_0 = bar_alpha_0 # Update the value of alpha_0
                 
             #Compute the function values and their corresponing gradients
-            f_alpha_0, f_alpha_L, df_alpha_0, df_alpha_L = self.compute_f_and_df(alpha_0, alpha_L,x_k,s_k)
+            f_alpha_0, f_alpha_L, df_alpha_0, df_alpha_L = self.compute_f_and_df(alpha_0, alpha_L, x_k, s_k)
             
             #Return the boolean values of lc and rc for the next iteration
             if line_search_method=='wolfe-powell':
                 lc, rc = self.lc_rc_wolfe_powell(alpha_0, alpha_L, x_k, s_k, f_alpha_0, \
                                         f_alpha_L, df_alpha_0, df_alpha_L)
             if line_search_method=='goldstein':
-                lc, rc = self.lc_rc_goldstein()
+                lc, rc = self.lc_rc_goldstein(alpha_0, alpha_L, x_k, s_k, f_alpha_0, \
+                                        f_alpha_L, df_alpha_0, df_alpha_L)
             
-        return alpha_0, f_alpha_0
+        return alpha_0#, f_alpha_0  # This gave an increasing dimensions of alpha...if we don't need the f_alpha_0 keep this commented
 
     def compute_f_and_df(self, alpha_0, alpha_L, x_k, s_k):
         '''Computes the function and the corresponding gradient evaluated 
@@ -237,8 +242,8 @@ class Solver(object):
         alpha_L_eval = x_k + alpha_L * s_k
         
         #Evaluate the gradient for the two points defined above (using the chain rule, thus s_k)
-        df_alpha_0 = self.compute_gradient(alpha_0_eval).T * s_k
-        df_alpha_L = self.compute_gradient(alpha_L_eval).T * s_k
+        df_alpha_0 = self.compute_gradient(alpha_0_eval).T @ s_k
+        df_alpha_L = self.compute_gradient(alpha_L_eval).T @ s_k
         
         #Evaluate the function in the same points
         f_alpha_0 = self.objective_function(alpha_0_eval)
@@ -274,7 +279,7 @@ class Solver(object):
         lc = False
         rc = False
         
-        if f_alpha_0 >= f_alpha_L + (1-self.rho)*(alpha_0-alpha_L)*df_alpha_L:
+        if f_alpha_0 >= f_alpha_l + (1-self.rho)*(alpha_0-alpha_L)*df_alpha_L:
             lc = True
             
         if f_alpha_0 <= f_alpha_L + self.rho*(alpha_0-alpha_L)*df_alpha_L:
