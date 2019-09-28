@@ -3,15 +3,16 @@ import optimization
 import numpy as np
 import scipy.linalg as sl
 import scipy.optimize as opt
+'''EV TODO = calculate gradient and hessian with numpy!'''
 
 
 def f(x):
     return 100*(x[1] - x[0]**2)**2 + (1 - x[0])**2
 
 def g(x):
-    grad = np.zeros(2)
-    grad[0] = 400*x[0]**3 - 400*x[0]*x[1] + 2*x[0] - 2
-    grad[1] = -200*x[0]**2 + 200*x[1]
+    grad = np.zeros((2,1))
+    grad[0,0] = 400*x[0]**3 - 400*x[0]*x[1] + 2*x[0] - 2
+    grad[1,0] = -200*x[0]**2 + 200*x[1]
     return grad
 
 def G(x):
@@ -31,13 +32,16 @@ line_search_methods = [None, 'exact_line_search', 'wolfe-powell', 'goldstein']
 
 # x, nice grad_tol/hess_tol
 #x0 = [4, 2]    #1e-8   1e-3
-#x0 = [1, 1]    #1e-8   1e-5
+x0 = [76, 1000.0]    #1e-8   1e-5
+#x0 = [10, 10]
 #x0 = [37, 100] #1e-6   1e-3
-x, fmin = solver.find_local_min(newton_methods[3], x0, line_search_methods[0], debug=True)
+x, fmin = solver.find_local_min(newton_methods[1], x0, line_search_methods[2], debug=True)
 
 
-print(solver.compute_gradient(x0) / g(x0))  
-print(solver.compute_hessian(x0) / G(x0))
+#blip = solver.compute_gradient(x0)
+#blop = g(x0)
+#print(solver.compute_gradient(x0) / g(x0))  
+#print(solver.compute_hessian(x0) / G(x0))
 
 
 
