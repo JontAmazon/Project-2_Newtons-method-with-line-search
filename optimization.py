@@ -54,7 +54,7 @@ class Solver(object):
 
         x0 = np.array(x0).astype(float)
         x_km1 = x0*0
-        x_k = x0
+        x_k = x0.reshape(2,1) # Reshape the x_k to fit with the gradients and stuff
         x_kp1 = x0
         
         g = self.compute_gradient(x_k)
@@ -82,11 +82,11 @@ class Solver(object):
             s_k = -H @ g #Newton direction
             alpha = self.line_search(line_search_method, x_k, s_k)
             x_kp1 = x_k + alpha*s_k
-            print('g in loop 1' + str(g))
-            print('x_kp1 in loop ' + str(x_kp1))
-            print('alpha in loop ' + str(alpha))
+#            print('g in loop 1' + str(g))
+#            print('x_kp1 in loop ' + str(x_kp1))
+#            print('alpha in loop ' + str(alpha))
             g = self.compute_gradient(x_kp1)
-            print('g in loop 2' + str(g))
+#            print('g in loop 2' + str(g))
             H = self.quasi_newton(quasi_newton_method, H, x_k, x_km1)
             x_km1 = x_k
             x_k=x_kp1
@@ -167,8 +167,8 @@ class Solver(object):
             return self.objective_function(x_k + alpha*s_k)
         
         guess = 1 # Guess for the scipy optimizer. Don't know what is a reasonable guess. Maybe alpha_k-1. Or just 1?
-        print('x_k in exactlinesearc ' + str(x_k))
-        print('s_k in exactlinesearc ' + str(s_k))
+#        print('x_k in exactlinesearc ' + str(x_k))
+#        print('s_k in exactlinesearc ' + str(s_k))
         optimization_res = scipy.optimize.minimize(step_function, guess, args=(x_k,s_k)) #returns some kind of optimization object, so we need to extract the x-value
         alpha_k = optimization_res.x
         #below returns the new alpha_k. Don't know what is better
@@ -188,7 +188,7 @@ class Solver(object):
             
         #Initiate alpha_L and alpha_U
         alpha_L = 0
-        alpha_U = 10**99
+        alpha_U = 10**2
         
         #Initiate alpha_0 by taking the average of the boundary values
         alpha_0 = (alpha_L + alpha_U)/2
@@ -245,18 +245,18 @@ class Solver(object):
         #Define the values on which to evaluate the function and the gradient
         alpha_0_eval = x_copy + alpha_0 * s_k
         alpha_L_eval = x_copy + alpha_L * s_k
-        print('alpha_0_eval in computefanddf ' + str(alpha_0_eval))
+#        print('alpha_0_eval in computefanddf ' + str(alpha_0_eval))
         
         #Evaluate the gradient for the two points defined above (using the chain rule, thus s_k)
         g0l = self.compute_gradient(alpha_0_eval)
-        print('g0l ' + str(g0l.T))
-        print('s_k ' + str(s_k))
+#        print('g0l ' + str(g0l.T))
+#        print('s_k ' + str(s_k))
         k = g0l.T@s_k
-        print(k[0])
+#        print(k[0])
         df_alpha_0 = float(self.compute_gradient(alpha_0_eval).T @ s_k)
         df_alpha_L = float(self.compute_gradient(alpha_L_eval).T @ s_k)
-        print(type(df_alpha_0))
-        print('df_alpha_0 ' + str(df_alpha_0))
+#        print(type(df_alpha_0))
+#        print('df_alpha_0 ' + str(df_alpha_0))
         
         #Evaluate the function in the same points
         f_alpha_0 = float(self.objective_function(alpha_0_eval))
@@ -314,8 +314,8 @@ class Solver(object):
         f = self.objective_function
         #fx = f(x) #we only need to calculate this once
         delta = self.grad_tol
-        print('x ' + str(x))
-        print('f ' + str(f(x)))
+#        print('x ' + str(x))
+#        print('f ' + str(f(x)))
         for i in range(n):
             x1 = x.copy()
             x2 = x.copy()
