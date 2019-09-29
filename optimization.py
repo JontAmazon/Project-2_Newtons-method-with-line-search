@@ -16,7 +16,7 @@ class Problem(object):
         
 
 class Solver(object):
-    def __init__(self, problem, dimensions=None, tol=1e-6, max_iterations=100, grad_tol=1e-4, hess_tol=1e-5):
+    def __init__(self, problem, dimensions=None, tol=1e-6, max_iterations=1000, grad_tol=1e-4, hess_tol=1e-5):
         self.objective_function = problem.objective_function
         self.gradient_function = problem.gradient_function #(might be equal to None).
         self.tol = tol
@@ -41,7 +41,7 @@ class Solver(object):
                 grad = np.zeros((2,1))
                 grad[0,0] = 400*x[0]**3 - 400*x[0]*x[1] + 2*x[0] - 2
                 grad[1,0] = -200*x[0]**2 + 200*x[1]
-                print('grad '+ str(grad))
+                #print('grad '+ str(grad))
                 return grad
             
             def G(x):
@@ -59,7 +59,7 @@ class Solver(object):
         
         g = self.compute_gradient(x_k)
         H = sl.inv(self.compute_hessian(x_k))
-        print('before loop ' + str(x_k))
+        #print('before loop ' + str(x_k))
         for i in range(self.max_iterations):
             if self.debug:
                 print('                   #' + str(i))
@@ -68,16 +68,20 @@ class Solver(object):
                 print('||g||:             ' + str(sl.norm(g,2)))
                 print('||g_correct||:     ' + str(sl.norm(gradient(x_k),2)))
                 print('||H||:             ' + str(sl.norm(H,2)))
-                print('H : ' + str(H))
+                print('||H_correct||:     ' + str(sl.norm(G(x_k), 2)))
+                #print('H : ' + str(H))
+                print()
 
             if sl.norm(g, 2) < self.tol:
                 print('||g|| < tol ==> We are done if only G > 0')
                 G = self.compute_hessian(x_kp1)
                 if self.is_positive_definite(G):
                     print('Yaaay! Local minima found after ' + str(i) + ' iterations.')
+                    print('Optimal x: ' + str(x_k))
+                    print('Optimal f: ' + str(self.objective_function(x_k)))
                     return x_k, self.objective_function(x_k)
                 print('Sadly, it was not the case.\n')
-            print('blebleble')
+            #print('blebleble')
             s_k = -(H @ g) #Newton direction
             alpha = self.line_search(line_search_method, x_k, s_k)
             x_kp1 = x_k + alpha*s_k

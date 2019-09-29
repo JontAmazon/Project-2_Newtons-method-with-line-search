@@ -3,7 +3,7 @@ import optimization
 import numpy as np
 import scipy.linalg as sl
 import scipy.optimize as opt
-'''EV TODO = calculate gradient and hessian with numpy!'''
+'''EV TODO = input function g into problem initialization.'''
 
 
 def f(x):
@@ -25,32 +25,43 @@ def G(x):
 
 problem = optimization.Problem(f)
 solver = optimization.Solver(problem, dimensions=2, tol=1e-5, grad_tol=1e-6, hess_tol=1e-3)
-
 newton_methods = ['exact_newton', 'good_broyden', 'bad_broyden', \
                   'davidon_fletcher_powell', 'broyden_fletcher_goldfarb_shanno']
 line_search_methods = [None, 'exact_line_search', 'wolfe-powell', 'goldstein']
+x0_options = [[1, 1],    #0
+              [1, 1.1],  #1
+              [1, 2],    #2
+              [1, 10],   #3
+              [1, 100],  #4
+              [1, 1000], #5
+              [1.1, 1],  #6
+              [2, 1],    #7
+              [10, 1],   #8
+              [100, 1],  #9
+              [1000, 1], #10
+              [1.1, 1.1], #11
+              [2, 2],    #12
+              [10, 10],  #13
+              [100, 100]]#14
 
-# x, nice grad_tol/hess_tol
-#x0 = [4, 2]    #1e-8   1e-3
-x0 = [76, 1000.0]    #1e-8   1e-5
-#x0 = [10, 10]
-#x0 = [37, 100] #1e-6   1e-3
-x, fmin = solver.find_local_min(newton_methods[1], x0, line_search_methods[1], debug=True)
+x0 = x0_options[13]
+newton_method = newton_methods[1]
+line_search_method = line_search_methods[1]
+x, fmin = solver.find_local_min(newton_method, x0, line_search_method, debug=True)
 
 
-#blip = solver.compute_gradient(x0)
-#blop = g(x0)
+
+
+
+
+
+''' KAN VA BRA ATT HA: '''
+# För att testa våra funktioner för att beräkna grad och hess:
 #print(solver.compute_gradient(x0) / g(x0))  
 #print(solver.compute_hessian(x0) / G(x0))
 
-
-
-#x, fmin = solver.find_local_min(newton_methods[0], x0, line_search_methods[0], debug=True)
 #xx, ffmin = opt.fmin_bfgs(f, np.array(x0))
 #optimum = opt.minimize(f, np.array(x0))
-#g = solver.compute_gradient(x0)
-#G = solver.compute_hessian(x0)
-#H = sl.inv(G)
 
 
 
