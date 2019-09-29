@@ -10,15 +10,17 @@ import scipy
 
 
 class Problem(object):
-    def __init__(self, objective_function, gradient_function=None):
+    def __init__(self, objective_function, gradient_function=None, hessian_function=None):
         self.objective_function = objective_function
         self.gradient_function = gradient_function
+        self.hessian_function = hessian_function
         
 
 class Solver(object):
-    def __init__(self, problem, dimensions=None, tol=1e-6, max_iterations=1000, grad_tol=1e-4, hess_tol=1e-5):
+    def __init__(self, problem, dimensions=None, tol=1e-6, max_iterations=400, grad_tol=1e-4, hess_tol=1e-5):
         self.objective_function = problem.objective_function
         self.gradient_function = problem.gradient_function #(might be equal to None).
+        self.hessian_function = problem.hessian_function #(might be equal to None).
         self.tol = tol
         self.grad_tol = grad_tol
         self.hess_tol = hess_tol
@@ -59,25 +61,21 @@ class Solver(object):
         
         g = self.compute_gradient(x_k)
         H = sl.inv(self.compute_hessian(x_k))
-        #print('before loop ' + str(x_k))
-        for i in range(self.max_iterations):
+        for i in range(self.max_iterations):            
             if self.debug:
-                print('                   #' + str(i))
-                print('x_k:               ' + str(x_k.T[0]))
-                print('f(x_k):            ' + str(self.objective_function(x_k)))                
-                print('||g||:             ' + str(sl.norm(g,2)))
-                print('||g_correct||:     ' + str(sl.norm(gradient(x_k),2)))
-                print('||H||:             ' + str(sl.norm(H,2)))
-                print('||H_correct||:     ' + str(sl.norm(G(x_k), 2)))
-                #print('H : ' + str(H))
+                print('                 #' + str(i))
+                print('x_k:             ' + str(x_k.T[0]))
+                print('f(x_k):          ' + str(self.objective_function(x_k)))                
+                #print('||g - g_corr||:  ' + str(sl.norm(g - gradient(x_k),2)))
+                #print('||H - H_corr||:  ' + str(sl.norm(H - sl.inv(G(x_k)),2)))
                 print()
 
             if sl.norm(g, 2) < self.tol:
                 print('||g|| < tol ==> We are done if only G > 0')
-                G = self.compute_hessian(x_kp1)
-                if self.is_positive_definite(G):
+                hess = self.compute_hessian(x_kp1)
+                if self.is_positive_definite(hess):
                     print('Yaaay! Local minima found after ' + str(i) + ' iterations.')
-                    print('Optimal x: ' + str(x_k))
+                    print('Optimal x: ' + str(x_k.T))
                     print('Optimal f: ' + str(self.objective_function(x_k)))
                     return x_k, self.objective_function(x_k)
                 print('Sadly, it was not the case.\n')
@@ -159,7 +157,7 @@ class Solver(object):
            Returns alpha by the chosen line search method.
        """
        if line_search_method==None:
-           return 1
+           return 0.5
        if line_search_method=='exact_line_search':
            return self.exact_line_search(x_k, s_k)
        if line_search_method=='wolfe-powell':
@@ -310,6 +308,8 @@ class Solver(object):
         gradient = np.zeros((n,1))
         f = self.objective_function
         delta = self.grad_tol
+        #delta = self.grad_tol * sl.norm(x, 2)
+        
         for i in range(n):
             x1 = x.copy()
             x2 = x.copy()
@@ -322,10 +322,14 @@ class Solver(object):
         # The i:th column of the Hessian G_i equals g(x) differentiated w.r.t. x_i
         # This is approximated with a finite difference:
         # G_i = (g(x + tol*e_i) - g(x))/tol
+        if self.hessian_function != None:
+            return self.hessian_function(x)
+
         n = self.dimensions
         hessian = np.zeros((n,n))
         g = self.compute_gradient
         delta = self.hess_tol
+        
         for i in range(n):
             x1 = x.copy()
             x2 = x.copy()

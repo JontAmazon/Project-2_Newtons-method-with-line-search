@@ -24,7 +24,7 @@ def G(x):
     
 
 problem = optimization.Problem(f)
-solver = optimization.Solver(problem, dimensions=2, tol=1e-5, grad_tol=1e-6, hess_tol=1e-3)
+solver = optimization.Solver(problem, dimensions=2, max_iterations=1000, tol=1e-5, grad_tol=1e-6, hess_tol=1e-3)
 newton_methods = ['exact_newton', 'good_broyden', 'bad_broyden', \
                   'davidon_fletcher_powell', 'broyden_fletcher_goldfarb_shanno']
 line_search_methods = [None, 'exact_line_search', 'wolfe-powell', 'goldstein']
@@ -42,11 +42,11 @@ x0_options = [[1, 1],    #0
               [1.1, 1.1], #11
               [2, 2],    #12
               [10, 10],  #13
-              [100, 100]]#14
-
+              [100, 100],#14
+              [1000,1000]]#15
 x0 = x0_options[13]
-newton_method = newton_methods[1]
-line_search_method = line_search_methods[1]
+newton_method = newton_methods[4]
+line_search_method = line_search_methods[3]
 x, fmin = solver.find_local_min(newton_method, x0, line_search_method, debug=True)
 
 
