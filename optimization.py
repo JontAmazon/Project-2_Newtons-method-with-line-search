@@ -193,11 +193,12 @@ class Solver(object):
         self.chi = 9
             
         #Initiate alpha_L and alpha_U
-        alpha_L = 0
+        alpha_L = 0.01
         alpha_U = 10**2
         
         #Initiate alpha_0 by taking the average of the boundary values
-        alpha_0 = (alpha_L + alpha_U)/2
+        #alpha_0 = (alpha_L + alpha_U)/2
+        alpha_0 = 1
         #ALTERNATIVELY: alpha_0 = np.random.rand(alpha_L, alpha_U, 1)
             
         #Compute the initial values of the function and the corresponding gradients

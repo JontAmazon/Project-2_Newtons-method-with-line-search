@@ -3,6 +3,7 @@ import optimization
 import numpy as np
 import scipy.linalg as sl
 import scipy.optimize as opt
+'''TODO SIST = lägg till #fval m.m.'''
 '''EV TODO = input function g into problem initialization.'''
 
 
@@ -45,8 +46,8 @@ x0_options = [[1, 1],    #0
               [100, 100],#14
               [1000,1000]]#15
 x0 = x0_options[13]
-newton_method = newton_methods[0]
-line_search_method = line_search_methods[0]
+newton_method = newton_methods[4]
+line_search_method = line_search_methods[3]
 x, fmin = solver.find_local_min(newton_method, x0, line_search_method, debug=True)
 
 
