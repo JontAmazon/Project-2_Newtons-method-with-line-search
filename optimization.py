@@ -68,7 +68,6 @@ class Solver(object):
                 print('f(x_k):          ' + str(self.objective_function(x_k)))                
                 #print('||g - g_corr||:  ' + str(sl.norm(g - gradient(x_k),2)))
                 #print('||H - H_corr||:  ' + str(sl.norm(H - sl.inv(G(x_k)),2)))
-                print()
 
             if sl.norm(g, 2) < self.tol:
                 print('||g|| < tol ==> We are done if only G > 0')
@@ -82,6 +81,9 @@ class Solver(object):
             #print('blebleble')
             s_k = -(H @ g) #Newton direction
             alpha = self.line_search(line_search_method, x_k, s_k)
+            print('alpha: ' + str(alpha))
+            print()
+            
             x_kp1 = x_k + alpha*s_k
             g = self.compute_gradient(x_kp1)
             H = self.quasi_newton(quasi_newton_method, H, x_k, x_km1)
@@ -157,7 +159,7 @@ class Solver(object):
            Returns alpha by the chosen line search method.
        """
        if line_search_method==None:
-           return 0.5
+           return 1
        if line_search_method=='exact_line_search':
            return self.exact_line_search(x_k, s_k)
        if line_search_method=='wolfe-powell':
@@ -329,6 +331,7 @@ class Solver(object):
         hessian = np.zeros((n,n))
         g = self.compute_gradient
         delta = self.hess_tol
+        #delta = self.hess_tol * sl.norm(x, 2)
         
         for i in range(n):
             x1 = x.copy()
