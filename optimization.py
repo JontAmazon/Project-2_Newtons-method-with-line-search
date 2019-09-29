@@ -274,8 +274,11 @@ class Solver(object):
         lc = False
         rc = False
             
-        if df_alpha_0 >= self.sigma * df_alpha_L:
+        if df_alpha_0 >= self.sigma * df_alpha_L:                      # this is regular Wolfe
             lc = True
+
+#        if abs(df_alpha_0) <= self.sigma * abs(df_alpha_L):           # this is strong Wolfe
+#            lc = True
     
         if f_alpha_0 <= f_alpha_L + self.rho*(alpha_0 - alpha_L)*df_alpha_L:
             rc = True
@@ -352,4 +355,73 @@ class Solver(object):
             return False
         else:
             return True
+
     
+
+
+
+    ''' CODING INEXACT LINE SEARCH AGAIN... TO MAYBE DISCOVER AN ERROR '''
+    def inexact_line_search2(self, line_search_method, x_k, s_k):
+        """
+            Inexact line search method for computing alpha^(k), using either 
+            Wolfe-Powell or Goldstein conditions.
+        """
+        self.rho = 0.1
+        self.sigma = 0.7
+        self.tao = 0.1
+        self.chi = 9
+            
+        a_L = 1e-3
+        a_U = 1e5    
+        a_0 = 1 # testa 1e1
+            
+        f_alpha_0, f_alpha_L, df_alpha_0, df_alpha_L = self.compute_f_and_df(alpha_0, alpha_L,x_k,s_k)
+            
+        if line_search_method=='wolfe-powell':
+            lc, rc = self.lc_rc_wolfe_powell(alpha_0, alpha_L, x_k, s_k, f_alpha_0, \
+                                        f_alpha_L, df_alpha_0, df_alpha_L)
+        if line_search_method=='goldstein':
+            lc, rc = self.lc_rc_goldstein(alpha_0, alpha_L, x_k, s_k, f_alpha_0, \
+                                        f_alpha_L, df_alpha_0, df_alpha_L)
+        
+        
+    #delta_alpha_0
+    #df_alpha_0
+    #df_alpha_L
+    #f_alpha_0
+    #f_alpha_L
+    #bar_alpha_0
+        while (not lc or not rc):
+            if not lc:
+                pass
+                #Block 1:
+                #...
+                
+            else:
+                pass
+                #Block 2:
+                #...
+                
+            f_alpha_0, f_alpha_L, df_alpha_0, df_alpha_L = self.compute_f_and_df(alpha_0, alpha_L, x_k, s_k)
+            
+            if line_search_method=='wolfe-powell':
+                lc, rc = self.lc_rc_wolfe_powell(alpha_0, alpha_L, x_k, s_k, f_alpha_0, \
+                                        f_alpha_L, df_alpha_0, df_alpha_L)
+            if line_search_method=='goldstein':
+                lc, rc = self.lc_rc_goldstein(alpha_0, alpha_L, x_k, s_k, f_alpha_0, \
+                                        f_alpha_L, df_alpha_0, df_alpha_L)
+            
+        return a_0
+
+
+
+
+
+
+
+
+
+
+
+
+        
