@@ -81,12 +81,28 @@ def gradchebyquad(x):
     return dot(chq[1:].reshape((1, -1)), UM).reshape((-1, ))
     
 if __name__ == '__main__':
-    x=linspace(0,1,4)
-    xmin= so.fmin_bfgs(chebyquad,x,gradchebyquad)  # should converge after 18 iterations  
+    x0=linspace(0,1,4)
+    xmin= so.fmin_bfgs(chebyquad,x0,gradchebyquad)  # should converge after 18 iterations  
+    fmin = chebyquad(xmin)
     
     problem = optimization.Problem(chebyquad)
     solver = optimization.Solver(problem, max_iterations=1000, tol=1e-5, grad_tol=1e-6, hess_tol=1e-3)
     newton_methods = ['exact_newton', 'good_broyden', 'bad_broyden', \
                   'davidon_fletcher_powell', 'broyden_fletcher_goldfarb_shanno']
     line_search_methods = [None, 'exact_line_search', 'wolfe-powell', 'goldstein']
-    xmin, fmin, x_values, noth, ing = solver.find_local_min(newton_methods[0], x, line_search_methods[2])
+    our_xmin, our_fmin, x_values, useless1, useless2 = \
+        solver.find_local_min(newton_methods[0], x, line_search_methods[2])
+
+
+
+
+
+
+
+
+
+
+
+
+
+
