@@ -17,7 +17,7 @@ class Problem(object):
         
 
 class Solver(object):
-    def __init__(self, problem, dimensions=None, tol=1e-6, max_iterations=400, grad_tol=1e-4, hess_tol=1e-5):
+    def __init__(self, problem, dimensions=None, tol=1e-5, max_iterations=400, grad_tol=1e-6, hess_tol=1e-3):
         self.objective_function = problem.objective_function
         self.gradient_function = problem.gradient_function #(might be equal to None).
         self.hessian_function = problem.hessian_function #(might be equal to None).
@@ -26,7 +26,7 @@ class Solver(object):
         self.hess_tol = hess_tol
         self.max_iterations = max_iterations
         if dimensions is not None:
-            self.dimensions = dimensions #this can be removed in the final version.
+            self.dimensions = dimensions #this can probably be removed in the final version.
                                         #just want it for debugging purposes.
 
 
@@ -38,23 +38,28 @@ class Solver(object):
         self.debug = debug
         self.dimensions = len(x0)
 
-        if self.debug:
-            def gradient(x):
+        if debug:                           # TODO: ersätt med:  if rosenbrock
+            def gradient(x): #EV TODO: ersätt med: "exact_gradient()"
                 grad = np.zeros((2,1))
                 grad[0,0] = 400*x[0]**3 - 400*x[0]*x[1] + 2*x[0] - 2
                 grad[1,0] = -200*x[0]**2 + 200*x[1]
                 #print('grad '+ str(grad))
                 return grad
             
-            def G(x):
+            def G(x):        #EV TODO: ersätt med "exact_hessian()"
                 hess = np.zeros((2,2))
                 hess[0,0] = 1200*x[0]**2 - 400*x[1] + 2
                 hess[0,1] = hess[1,0] = -400*x[0]
                 hess[1,1] = 200
                 return hess
             
-        #Create an empty vector for the encountered x-values during minimization    
-        x_values = [];    
+        #Create an empty vector for the encountered x-values during minimization  
+        x_values = [];
+        
+        #[Task 12]. Also create two vectors for studying H by
+        #comparing it to H_correct, where H_correct = inv(G(x)).
+        h_diff_values = [];
+        h_quotient_values = [];
         
         x0 = np.array(x0).astype(float)
         x_km1 = x0*0
@@ -68,6 +73,9 @@ class Solver(object):
             
             #Save the current x_k in a list for plotting
             x_values.append(x_k)
+            if self.dimensions==2: # TASK 12.
+                h_diff_values.append(sl.norm(H - sl.inv(G(x_k)),2))
+                h_quotient_values.append(sl.norm(H,2) / sl.norm(sl.inv(G(x_k),2)))
             
             if self.debug:
                 print('                 #' + str(i))
@@ -77,18 +85,19 @@ class Solver(object):
                 #print('||H - H_corr||:  ' + str(sl.norm(H - sl.inv(G(x_k)),2)))
 
             if sl.norm(g, 2) < self.tol:
-                print('||g|| < tol ==> We are done if only G > 0')
+                #print('||g|| < tol ==> We are done if only G > 0')
                 hess = self.compute_hessian(x_kp1)
                 if self.is_positive_definite(hess):
                     print('Yaaay! Local minima found after ' + str(i) + ' iterations.')
                     print('Optimal x: ' + str(x_k.T))
                     print('Optimal f: ' + str(self.objective_function(x_k)))
-                    return x_k, self.objective_function(x_k), x_values
-                print('Sadly, it was not the case.\n')
+                    return x_k, self.objective_function(x_k), x_values, h_diff_values, h_quotient_values
+                #print('Sadly, it was not the case.\n')
             s_k = -(H @ g) #Newton direction
             alpha = self.line_search(line_search_method, x_k, s_k)
-            print('alpha: ' + str(alpha))
-            print()
+            if self.debug:
+                print('alpha: ' + str(alpha))
+                print()
             
             x_kp1 = x_k + alpha*s_k
             g = self.compute_gradient(x_kp1)
@@ -98,7 +107,7 @@ class Solver(object):
         
         print('Local minima could not be found in ' \
             + str(self.max_iterations) + ' iterations.')
-        return x_k, self.objective_function(x_k), x_values
+        return x_k, self.objective_function(x_k), x_values, h_diff_values, h_quotient_values
     
     # Methods to compute the inverse Hessian. All are accessed through the quasi_newton method below.
     def exact_newton(self, H, x_k, x_km1):
@@ -227,10 +236,7 @@ class Solver(object):
                 #if abs(df_alpha_L - df_alpha_0) <= 0.0001:
                 #    print("Look here")
                 delta_alpha_0 = (alpha_0 - alpha_L)*df_alpha_0/(df_alpha_L - df_alpha_0) #Compute delta(alpha_0) by extrapolation
-                delta_alpha_0 = np.max([abs(delta_alpha_0), self.tao*(alpha_0 - alpha_L)]) #Make sure delta_alpha_0 is not too small
-                if delta_alpha_0 < 0 and delta_alpha_0 == abs(delta_alpha_0):
-                    delta_alpha_0 = -delta_alpha_0
-                    
+                delta_alpha_0 = np.max([abs(delta_alpha_0), self.tao*(alpha_0 - alpha_L)]) #Make sure delta_alpha_0 is not too small                
                 delta_alpha_0 = np.min([delta_alpha_0, self.chi*(alpha_0 - alpha_L)]) #Make sure delta_alpha_0 is not too large
                 alpha_L = np.copy(alpha_0) #Assign the value of alpha_0 to alpha_L
                 alpha_0 = alpha_0 + delta_alpha_0#Update the value of alpha_0
