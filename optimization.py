@@ -97,7 +97,7 @@ class Solver(object):
         
         print('Local minima could not be found in ' \
             + str(self.max_iterations) + ' iterations.')
-        
+        return x_values
     
     # Methods to compute the inverse Hessian. All are accessed through the quasi_newton method below.
     def exact_newton(self, H, x_k, x_km1):
