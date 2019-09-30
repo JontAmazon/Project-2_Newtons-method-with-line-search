@@ -51,8 +51,10 @@ x0_options = [[1, 1],    #0
 x0 = [0, 0]
 newton_method = newton_methods[0]
 line_search_method = line_search_methods[1]
-x, fmin, x_values = solver.find_local_min(newton_method, x0, line_search_method, debug=True)
-
+x, fmin, x_values, h_diff_values, h_quotient_values = \
+    solver.find_local_min(newton_method, x0, line_search_method, debug=True)
+#OBS. endast main.py använder h_diff och h_quotient.
+    
 if rosenbrock:
     
     #Plot the Rosenbrock-function
@@ -70,7 +72,7 @@ if rosenbrock:
             z[i][j] = f(x[i],y[j])
             
     contours = plt.contour(x,y,z.T,[5, 10,300,3000,3e4,3e5, 1e8])
-    plt.clabel(contours,inline=1,fontsinze=10)
+    plt.clabel(contours,inline=1)
     
     #Plot the initial point
     plt.plot(x_values[0][0], x_values[0][1],  'bo', color = 'r')
@@ -82,3 +84,4 @@ if rosenbrock:
     plt.plot(x_values[len(x_values)-1][0], x_values[i+1][1],  'bo', color = 'g')
     
     plt.show()
+    #plt.close()

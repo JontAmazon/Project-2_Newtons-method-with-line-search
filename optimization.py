@@ -38,23 +38,28 @@ class Solver(object):
         self.debug = debug
         self.dimensions = len(x0)
 
-        if self.debug:
-            def gradient(x):
+        if debug:                           # TODO: ersätt med:  if rosenbrock
+            def gradient(x): #EV TODO: ersätt med: "exact_gradient()"
                 grad = np.zeros((2,1))
                 grad[0,0] = 400*x[0]**3 - 400*x[0]*x[1] + 2*x[0] - 2
                 grad[1,0] = -200*x[0]**2 + 200*x[1]
                 #print('grad '+ str(grad))
                 return grad
             
-            def G(x):
+            def G(x):        #EV TODO: ersätt med "exact_hessian()"
                 hess = np.zeros((2,2))
                 hess[0,0] = 1200*x[0]**2 - 400*x[1] + 2
                 hess[0,1] = hess[1,0] = -400*x[0]
                 hess[1,1] = 200
                 return hess
             
-        #Create an empty vector for the encountered x-values during minimization    
-        x_values = [];    
+        #Create an empty vector for the encountered x-values during minimization  
+        x_values = [];
+        
+        #[Task 12]. Also create two vectors for studying H by
+        #comparing it to H_correct, where H_correct = inv(G(x)).
+        h_diff_values = [];
+        h_quotient_values = [];
         
         x0 = np.array(x0).astype(float)
         x_km1 = x0*0
@@ -68,6 +73,9 @@ class Solver(object):
             
             #Save the current x_k in a list for plotting
             x_values.append(x_k)
+            if self.dimensions==2: # TASK 12.
+                h_diff_values.append(sl.norm(H - sl.inv(G(x_k)),2))
+                h_quotient_values.append(sl.norm(H,2) / sl.norm(sl.inv(G(x_k),2)))
             
             if self.debug:
                 print('                 #' + str(i))
@@ -83,7 +91,7 @@ class Solver(object):
                     print('Yaaay! Local minima found after ' + str(i) + ' iterations.')
                     print('Optimal x: ' + str(x_k.T))
                     print('Optimal f: ' + str(self.objective_function(x_k)))
-                    return x_k, self.objective_function(x_k), x_values
+                    return x_k, self.objective_function(x_k), x_values, h_diff_values, h_quotient_values
                 print('Sadly, it was not the case.\n')
             s_k = -(H @ g) #Newton direction
             alpha = self.line_search(line_search_method, x_k, s_k)
@@ -98,7 +106,7 @@ class Solver(object):
         
         print('Local minima could not be found in ' \
             + str(self.max_iterations) + ' iterations.')
-        return x_k, self.objective_function(x_k), x_values
+        return x_k, self.objective_function(x_k), x_values, h_diff_values, h_quotient_values
     
     # Methods to compute the inverse Hessian. All are accessed through the quasi_newton method below.
     def exact_newton(self, H, x_k, x_km1):
