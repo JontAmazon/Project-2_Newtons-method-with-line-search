@@ -4,7 +4,7 @@ import numpy as np
 import scipy.linalg as sl
 import scipy.optimize as opt
 import matplotlib.pyplot as plt
-'''TODO SIST = lägg till #fval m.m.'''
+'''TODO SIST = lägg till #func_eval och #grad_eval'''
 
 
 ''' ROSENBROCK PROBLEM '''

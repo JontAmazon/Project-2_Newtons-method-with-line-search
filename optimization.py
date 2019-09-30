@@ -17,7 +17,7 @@ class Problem(object):
         
 
 class Solver(object):
-    def __init__(self, problem, dimensions=None, tol=1e-6, max_iterations=400, grad_tol=1e-4, hess_tol=1e-5):
+    def __init__(self, problem, dimensions=None, tol=1e-5, max_iterations=400, grad_tol=1e-6, hess_tol=1e-3):
         self.objective_function = problem.objective_function
         self.gradient_function = problem.gradient_function #(might be equal to None).
         self.hessian_function = problem.hessian_function #(might be equal to None).
@@ -26,7 +26,7 @@ class Solver(object):
         self.hess_tol = hess_tol
         self.max_iterations = max_iterations
         if dimensions is not None:
-            self.dimensions = dimensions #this can be removed in the final version.
+            self.dimensions = dimensions #this can probably be removed in the final version.
                                         #just want it for debugging purposes.
 
 
@@ -85,18 +85,19 @@ class Solver(object):
                 #print('||H - H_corr||:  ' + str(sl.norm(H - sl.inv(G(x_k)),2)))
 
             if sl.norm(g, 2) < self.tol:
-                print('||g|| < tol ==> We are done if only G > 0')
+                #print('||g|| < tol ==> We are done if only G > 0')
                 hess = self.compute_hessian(x_kp1)
                 if self.is_positive_definite(hess):
                     print('Yaaay! Local minima found after ' + str(i) + ' iterations.')
                     print('Optimal x: ' + str(x_k.T))
                     print('Optimal f: ' + str(self.objective_function(x_k)))
                     return x_k, self.objective_function(x_k), x_values, h_diff_values, h_quotient_values
-                print('Sadly, it was not the case.\n')
+                #print('Sadly, it was not the case.\n')
             s_k = -(H @ g) #Newton direction
             alpha = self.line_search(line_search_method, x_k, s_k)
-            print('alpha: ' + str(alpha))
-            print()
+            if self.debug:
+                print('alpha: ' + str(alpha))
+                print()
             
             x_kp1 = x_k + alpha*s_k
             g = self.compute_gradient(x_kp1)
