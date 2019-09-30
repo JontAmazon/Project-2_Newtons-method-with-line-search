@@ -11,7 +11,7 @@ Claus FÃ¼hrer (2016)
 from  scipy import dot,linspace
 import scipy.optimize as so
 from numpy import array
-
+import optimization
 
 def T(x, n):
     """
@@ -81,6 +81,12 @@ def gradchebyquad(x):
     return dot(chq[1:].reshape((1, -1)), UM).reshape((-1, ))
     
 if __name__ == '__main__':
-    x=linspace(0,1,8)
+    x=linspace(0,1,4)
     xmin= so.fmin_bfgs(chebyquad,x,gradchebyquad)  # should converge after 18 iterations  
-
+    
+    problem = optimization.Problem(chebyquad)
+    solver = optimization.Solver(problem, max_iterations=1000, tol=1e-5, grad_tol=1e-6, hess_tol=1e-3)
+    newton_methods = ['exact_newton', 'good_broyden', 'bad_broyden', \
+                  'davidon_fletcher_powell', 'broyden_fletcher_goldfarb_shanno']
+    line_search_methods = [None, 'exact_line_search', 'wolfe-powell', 'goldstein']
+    xmin, fmin, x_values = solver.find_local_min(newton_methods[0], x, line_search_methods[2])
