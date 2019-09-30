@@ -318,7 +318,9 @@ class Solver(object):
     def compute_gradient(self, x):
         # Do we have an explicit function for the gradient? Then use it!
         if self.gradient_function != None:
-            return self.gradient_function(x)
+            g = self.gradient_function(x)
+            g = np.array([g[i] for i in range(len(g))])
+            return g
         
         # If not, compute it with central finite differences:
         n = self.dimensions
