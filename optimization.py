@@ -56,7 +56,7 @@ class Solver(object):
 
         x0 = np.array(x0).astype(float)
         x_km1 = x0*0
-        x_k = x0.reshape(2,1) # Reshape the x_k to fit with the gradients and stuff
+        x_k = x0.reshape(self.dimensions,1) # Reshape the x_k to fit with the gradients and stuff
         x_kp1 = x0
         
         g = self.compute_gradient(x_k)
@@ -193,7 +193,7 @@ class Solver(object):
         self.chi = 9
             
         #Initiate alpha_L and alpha_U
-        alpha_L = 0.01
+        alpha_L = 0
         alpha_U = 10**2
         
         #Initiate alpha_0 by taking the average of the boundary values
@@ -218,6 +218,8 @@ class Solver(object):
         while (not lc or not rc):
             if not lc:
                 #Implementation of Block 1 in the slides
+                #if abs(df_alpha_L - df_alpha_0) <= 0.0001:
+                #    print("Look here")
                 delta_alpha_0 = (alpha_0 - alpha_L)*df_alpha_0/(df_alpha_L - df_alpha_0) #Compute delta(alpha_0) by extrapolation
                 delta_alpha_0 = np.max([delta_alpha_0, self.tao*(alpha_0 - alpha_L)]) #Make sure delta_alpha_0 is not too small
                 delta_alpha_0 = np.min([delta_alpha_0, self.chi*(alpha_0 - alpha_L)]) #Make sure delta_alpha_0 is not too large

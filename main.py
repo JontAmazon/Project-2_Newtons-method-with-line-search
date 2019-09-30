@@ -9,6 +9,9 @@ import scipy.optimize as opt
 
 def f(x):
     return 100*(x[1] - x[0]**2)**2 + (1 - x[0])**2
+    
+def f1(x):
+    return x**5 + 3.5*x**4 - 2.5*x**3 -12.5*x**2 + 1.5*x + 9
 
 def g(x):
     grad = np.zeros((2,1))
@@ -22,6 +25,8 @@ def G(x):
     hess[0,1] = hess[1,0] = -400*x[0]
     hess[1,1] = 200
     return hess
+
+
     
 
 problem = optimization.Problem(f)
@@ -46,10 +51,15 @@ x0_options = [[1, 1],    #0
               [100, 100],#14
               [1000,1000]]#15
 x0 = x0_options[13]
-newton_method = newton_methods[4]
+newton_method = newton_methods[0]
 line_search_method = line_search_methods[2]
 x, fmin = solver.find_local_min(newton_method, x0, line_search_method, debug=True)
 
+"""Test one dimentional problem """
+#problem = optimization.Problem(f1)
+#solver = optimization.Solver(problem, dimensions=1, max_iterations=1000, tol=1e-5, grad_tol=1e-6, hess_tol=1e-3)
+#
+#x, fmin = solver.find_local_min(newton_method, [1], line_search_method, debug=True)
 
 
 
