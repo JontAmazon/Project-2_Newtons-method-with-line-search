@@ -63,6 +63,7 @@ class Solver(object):
         
         g = self.compute_gradient(x_k)
         H = sl.inv(self.compute_hessian(x_k))
+
         for i in range(self.max_iterations): 
             
             #Save the current x_k in a list for plotting
@@ -97,7 +98,7 @@ class Solver(object):
         
         print('Local minima could not be found in ' \
             + str(self.max_iterations) + ' iterations.')
-        return x_values
+        return x_k, self.objective_function(x_k), x_values
     
     # Methods to compute the inverse Hessian. All are accessed through the quasi_newton method below.
     def exact_newton(self, H, x_k, x_km1):
@@ -130,8 +131,9 @@ class Solver(object):
         # so we need to transpose delta_k to row matrix and then transpose back
         delta_k = (x_k.T - x_km1.T).T
         gamma_k = self.compute_gradient(x_k)-self.compute_gradient(x_km1)
-        a = np.outer(delta_k,delta_k)/np.inner(delta_k,gamma_k)
+        a = (delta_k@delta_k.T)/float(delta_k.T@gamma_k)
         b = H@np.outer(gamma_k,gamma_k)@H/(gamma_k.T@H@gamma_k)
+
         return H + a - b
     
     def broyden_fletcher_goldfarb_shanno(self,H,x_k,x_km1):
