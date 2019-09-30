@@ -53,7 +53,9 @@ class Solver(object):
                 hess[1,1] = 200
                 return hess
             
-
+        #Create an empty vector for the encountered x-values during minimization    
+        x_values = [];    
+        
         x0 = np.array(x0).astype(float)
         x_km1 = x0*0
         x_k = x0.reshape(self.dimensions,1) # Reshape the x_k to fit with the gradients and stuff
@@ -61,7 +63,11 @@ class Solver(object):
         
         g = self.compute_gradient(x_k)
         H = sl.inv(self.compute_hessian(x_k))
-        for i in range(self.max_iterations):            
+        for i in range(self.max_iterations): 
+            
+            #Save the current x_k in a list for plotting
+            x_values.append(x_k)
+            
             if self.debug:
                 print('                 #' + str(i))
                 print('x_k:             ' + str(x_k.T[0]))
@@ -76,7 +82,7 @@ class Solver(object):
                     print('Yaaay! Local minima found after ' + str(i) + ' iterations.')
                     print('Optimal x: ' + str(x_k.T))
                     print('Optimal f: ' + str(self.objective_function(x_k)))
-                    return x_k, self.objective_function(x_k)
+                    return x_k, self.objective_function(x_k), x_values
                 print('Sadly, it was not the case.\n')
             #print('blebleble')
             s_k = -(H @ g) #Newton direction
@@ -93,7 +99,6 @@ class Solver(object):
         print('Local minima could not be found in ' \
             + str(self.max_iterations) + ' iterations.')
         
-    
     
     # Methods to compute the inverse Hessian. All are accessed through the quasi_newton method below.
     def exact_newton(self, H, x_k, x_km1):
