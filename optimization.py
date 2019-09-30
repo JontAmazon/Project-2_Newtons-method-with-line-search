@@ -236,10 +236,7 @@ class Solver(object):
                 #if abs(df_alpha_L - df_alpha_0) <= 0.0001:
                 #    print("Look here")
                 delta_alpha_0 = (alpha_0 - alpha_L)*df_alpha_0/(df_alpha_L - df_alpha_0) #Compute delta(alpha_0) by extrapolation
-                delta_alpha_0 = np.max([abs(delta_alpha_0), self.tao*(alpha_0 - alpha_L)]) #Make sure delta_alpha_0 is not too small
-                if delta_alpha_0 < 0 and delta_alpha_0 == abs(delta_alpha_0):
-                    delta_alpha_0 = -delta_alpha_0
-                    
+                delta_alpha_0 = np.max([abs(delta_alpha_0), self.tao*(alpha_0 - alpha_L)]) #Make sure delta_alpha_0 is not too small                
                 delta_alpha_0 = np.min([delta_alpha_0, self.chi*(alpha_0 - alpha_L)]) #Make sure delta_alpha_0 is not too large
                 alpha_L = np.copy(alpha_0) #Assign the value of alpha_0 to alpha_L
                 alpha_0 = alpha_0 + delta_alpha_0#Update the value of alpha_0
