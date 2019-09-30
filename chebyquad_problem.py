@@ -89,4 +89,4 @@ if __name__ == '__main__':
     newton_methods = ['exact_newton', 'good_broyden', 'bad_broyden', \
                   'davidon_fletcher_powell', 'broyden_fletcher_goldfarb_shanno']
     line_search_methods = [None, 'exact_line_search', 'wolfe-powell', 'goldstein']
-    xmin, fmin, x_values = solver.find_local_min(newton_methods[0], x, line_search_methods[2])
+    xmin, fmin, x_values, noth, ing = solver.find_local_min(newton_methods[0], x, line_search_methods[2])
