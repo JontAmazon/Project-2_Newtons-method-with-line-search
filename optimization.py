@@ -78,7 +78,6 @@ class Solver(object):
                     print('Optimal f: ' + str(self.objective_function(x_k)))
                     return x_k, self.objective_function(x_k)
                 print('Sadly, it was not the case.\n')
-            #print('blebleble')
             s_k = -(H @ g) #Newton direction
             alpha = self.line_search(line_search_method, x_k, s_k)
             print('alpha: ' + str(alpha))
