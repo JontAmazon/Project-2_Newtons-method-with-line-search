@@ -73,7 +73,7 @@ class Solver(object):
             if not  x0[i] ==0:
                 all_zeros= False
         if all_zeros==True:
-            print("Bad x-value, please don't initiate at the origin.")
+            print("Bad x-value, please don't initiate in the origin.")
             return x0, self.objective_function(x0), x0, None, None
 
         
