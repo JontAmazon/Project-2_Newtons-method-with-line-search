@@ -90,7 +90,8 @@ class Solver(object):
                 hess = self.compute_hessian(x_kp1)
                 if self.is_positive_definite(hess):
                     print('\nYaaay! Local minima found after ' + str(i) + ' iterations.')
-                    print('    #')
+                    print('    #function evaluations: ' + str(self.feval))
+                    print('    #gradient evaluations: ' + str(self.geval))
                     print('    Optimal x: ' + str(x_k.T))
                     print('    Optimal f: ' + str(self.objective_function(x_k)))
                     return x_k, self.objective_function(x_k), x_values, h_diff_values, h_quotient_values
