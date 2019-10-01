@@ -78,27 +78,31 @@ class Solver(object):
                 h_quotient_values.append(sl.norm(H,2) / sl.norm(sl.inv(G(x_k),2)))
             
             if self.debug:
-                print('Iteration         #' + str(i))
-                #print('x_k:             ' + str(x_k.T[0]))
-                #print('f(x_k):          ' + str(self.objective_function(x_k)))                
-                #print('||g - g_corr||:  ' + str(sl.norm(g - gradient(x_k),2)))
-                #print('||H - H_corr||:  ' + str(sl.norm(H - sl.inv(G(x_k)),2)))
+                if i < 5:
+                    print('\nIteration         #' + str(i))
+                    #print('x_k:             ' + str(x_k.T[0]))
+                    #print('f(x_k):          ' + str(self.objective_function(x_k)))                
+                    #print('||g - g_corr||:  ' + str(sl.norm(g - gradient(x_k),2)))
+                    #print('||H - H_corr||:  ' + str(sl.norm(H - sl.inv(G(x_k)),2)))
 
             if sl.norm(g, 2) < self.tol:
                 #print('||g|| < tol ==> We are done if only G > 0')
                 hess = self.compute_hessian(x_kp1)
                 if self.is_positive_definite(hess):
                     print('\nYaaay! Local minima found after ' + str(i) + ' iterations.')
-                    print('    #')
+                    print('    #function evaluations: ' + str(self.feval))
+                    print('    #gradient evaluations: ' + str(self.geval))
                     print('    Optimal x: ' + str(x_k.T))
                     print('    Optimal f: ' + str(self.objective_function(x_k)))
                     return x_k, self.objective_function(x_k), x_values, h_diff_values, h_quotient_values
                 #print('Sadly, it was not the case.\n')
             s_k = -(H @ g) #Newton direction
-            alpha = self.line_search(line_search_method, x_k, s_k)
+            alpha = self.line_search(line_search_method, x_k, s_k)            
+            
             if self.debug:
-                print('alpha: ' + str(alpha))
-                print()
+                if i < 5:
+                    print('||s_k||:           ' + str(sl.norm(H@g, 2)))
+                    print('alpha:             ' + str(alpha))
             
             x_kp1 = x_k + alpha*s_k
             g = self.compute_gradient(x_kp1)
@@ -366,10 +370,11 @@ class Solver(object):
             x1[i] = x1[i] + delta
             x2[i] = x2[i] - delta            
             hessian[:,i] = ((g(x1) - g(x2)) / (2*delta)).T
+            self.geval = self.geval + 2                                         #OK?
         hessian = 1/2*hessian + 1/2*np.conj(hessian.T)
         return hessian
 
-    def is_positive_definite(self, A):                                          #[92%]
+    def is_positive_definite(self, A):
         # Computing the Cholesky decomposition with (numpy.linalg.cholesky)
         # raises LinAlgError if the matrix is not positive definite.
         try:
