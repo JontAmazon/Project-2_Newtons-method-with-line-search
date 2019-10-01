@@ -26,7 +26,8 @@ def G(x):
     return hess
     
 
-problem = optimization.Problem(f, gradient_function=g)
+#problem = optimization.Problem(f, gradient_function=g)
+problem = optimization.Problem(f)
 solver = optimization.Solver(problem, dimensions=2, max_iterations=1000, tol=1e-5, grad_tol=1e-6, hess_tol=1e-3)
 newton_methods = ['exact_newton', 'good_broyden', 'bad_broyden', \
                   'davidon_fletcher_powell', 'broyden_fletcher_goldfarb_shanno']
@@ -48,9 +49,9 @@ x0_options = [[1, 1],    #0
               [100, 100],#14
               [1000,1000]]#15
 #x0 = x0_options[8]
-x0 = [0, 0]
-newton_method = newton_methods[0]
-line_search_method = line_search_methods[1]
+x0 = [-3.9, -1.1]
+newton_method = newton_methods[1]
+line_search_method = line_search_methods[2]
 x, fmin, x_values, h_diff_values, h_quotient_values = \
     solver.find_local_min(newton_method, x0, line_search_method, debug=True)
 #OBS. endast main.py använder h_diff och h_quotient.

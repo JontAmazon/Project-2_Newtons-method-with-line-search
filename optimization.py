@@ -68,7 +68,7 @@ class Solver(object):
         x_kp1 = x0
         g = self.compute_gradient(x_k)
         H = sl.inv(self.compute_hessian(x_k))
-        
+        cheat_count=0
         for i in range(self.max_iterations): 
             
             #Save the current x_k in a list for plotting
@@ -94,15 +94,25 @@ class Solver(object):
                     print('    #gradient evaluations: ' + str(self.geval))
                     print('    Optimal x: ' + str(x_k.T))
                     print('    Optimal f: ' + str(self.objective_function(x_k)))
+                    print('We cheated ' + str(cheat_count) + ' time(s)... ;)')
                     return x_k, self.objective_function(x_k), x_values, h_diff_values, h_quotient_values
                 #print('Sadly, it was not the case.\n')
             s_k = -(H @ g) #Newton direction
-            alpha = self.line_search(line_search_method, x_k, s_k)            
+            alpha = self.line_search(line_search_method, x_k, s_k) 
+            tresh = 1e-6
+            if alpha < tresh:
+                alpha = self.line_search('exact_line_search', x_k, s_k)
+                print('s_k in cheat ' + str(s_k))
+                print('g in cheat ' + str(g))
+                print('cheating with exact alpha')
+                cheat_count+=1
+                
             
             if self.debug:
-                if i < 5:
+                if i < 5000:
                     print('||s_k||:           ' + str(sl.norm(H@g, 2)))
                     print('alpha:             ' + str(alpha))
+                    print('x_k'                 + str(x_k ))
             
             x_kp1 = x_k + alpha*s_k
             g = self.compute_gradient(x_kp1)
@@ -198,7 +208,6 @@ class Solver(object):
         #optimization_res = scipy.optimize.minimize(step_function, guess, args=(x_copy,s_k)) #returns some kind of optimization object, so we need to extract the x-value
         #alpha_k = optimization_res.x
         alpha_k = scipy.optimize.fmin(step_function,guess,args=(x_copy,s_k))
-        #below returns the new alpha_k. Don't know what is better
         return alpha_k
     
     
@@ -208,8 +217,8 @@ class Solver(object):
             Wolfe-Powell or Goldstein conditions.
         """
         #Define the default values for the method parameters
-        self.rho = 0.1
-        self.sigma = 0.7
+        self.rho = 0.01
+        self.sigma = 0.1
         self.tao = 0.1
         self.chi = 9
             
@@ -234,8 +243,9 @@ class Solver(object):
         if line_search_method=='goldstein':
             lc, rc = self.lc_rc_goldstein(alpha_0, alpha_L, x_k, s_k, f_alpha_0, \
                                         f_alpha_L, df_alpha_0, df_alpha_L)
-            
-        while (not lc or not rc):
+        j = 0  
+        while (not lc or not rc) and j < 10:
+            j = j+1
             if not lc:
                 #Implementation of Block 1 in the slides
                 #if abs(df_alpha_L - df_alpha_0) <= 0.0001:
