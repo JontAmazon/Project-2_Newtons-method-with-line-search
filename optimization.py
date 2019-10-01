@@ -62,9 +62,9 @@ class Solver(object):
         h_diff_values = [];
         h_quotient_values = [];
         
-        x0 = np.array(x0).astype(float).reshape(self.dimensions,1)
+        x0 = np.array(x0).astype(float).reshape(self.dimensions,1) # Reshape the x_k to fit with the gradients and stuff
         x_km1 = x0*0
-        x_k =  x0# Reshape the x_k to fit with the gradients and stuff
+        x_k = x0 
         x_kp1 = x0
         
         g = self.compute_gradient(x_k)
