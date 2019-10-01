@@ -66,9 +66,9 @@ newton_method = newton_methods[4]
 line_search_method = line_search_methods[2]
 
 cheby_bool = True
-x0 = [0.8]
+#x0 = [.5]
 #x0 = x0_options[13]
-#x0 = np.linspace(0,1,4) #OK?
+x0 = np.linspace(0,1,4) #OK?
 
 
 if len(x0)==1 and not cheby_bool:
@@ -137,7 +137,7 @@ if cheby_bool==True:
     
  #   problem = optimization.Problem(chebyquad)
     problem = optimization.Problem(cheb.chebyquad, cheb.gradchebyquad)
-    solver = optimization.Solver(problem, max_iterations=1000, tol=1e-5, grad_tol=1e-6, hess_tol=1e-3)
+    solver = optimization.Solver(problem, max_iterations=1000,dimensions=len(x), tol=1e-5, grad_tol=1e-6, hess_tol=1e-3)
     newton_methods = ['exact_newton', 'good_broyden', 'bad_broyden', \
                   'davidon_fletcher_powell', 'broyden_fletcher_goldfarb_shanno']
     line_search_methods = [None, 'exact_line_search', 'wolfe-powell', 'goldstein']

@@ -68,18 +68,20 @@ class Solver(object):
         x0 = np.array(x0).astype(float).reshape(self.dimensions,1) # Reshape the x_k to fit with the gradients and stuff
         
         #Check if x0 is located in the origin. If so, redo!
+        
+
+        
+        x_km1 = x0*0.9
+        x_k = x0 
+        x_kp1 = x0
+
         all_zeros = True
         for i in range(len(x0)):
             if not  x0[i] ==0:
                 all_zeros= False
         if all_zeros==True:
-            print("Bad x-value, please don't initiate in the origin.")
-            return x0, self.objective_function(x0), x0, None, None
-
-        
-        x_km1 = x0*0
-        x_k = x0 
-        x_kp1 = x0
+            x_km1 = x0-np.array([0.00001*np.ones(len(x0))]).reshape(self.dimensions,1)
+            
         g = self.compute_gradient(x_k)
         H = sl.inv(self.compute_hessian(x_k))
         cheat_count=0
@@ -89,7 +91,7 @@ class Solver(object):
             x_values.append(x_k)
             if debug:
                 if self.dimensions==2: # TASK 12.
-                    h_diff_values.append(sl.norm(H - sl.inv(G(x_k)(x_k)),2))
+                    h_diff_values.append(sl.norm(H - sl.inv(G(x_k)),2))
                     h_quotient_values.append(sl.norm(H,2) / sl.norm(sl.inv(G(x_k),2)))
             
             if self.debug:
