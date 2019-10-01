@@ -87,9 +87,10 @@ class Solver(object):
             
             #Save the current x_k in a list for plotting
             x_values.append(x_k)
-            if self.dimensions==2: # TASK 12.
-                h_diff_values.append(sl.norm(H - sl.inv(G(x_k)),2))
-                h_quotient_values.append(sl.norm(H,2) / sl.norm(sl.inv(G(x_k),2)))
+            if debug:
+                if self.dimensions==2: # TASK 12.
+                    h_diff_values.append(sl.norm(H - sl.inv(G(x_k)(x_k)),2))
+                    h_quotient_values.append(sl.norm(H,2) / sl.norm(sl.inv(G(x_k),2)))
             
             if self.debug:
                     print('\nIteration         #' + str(i))
