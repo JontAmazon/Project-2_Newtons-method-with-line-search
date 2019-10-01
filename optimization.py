@@ -71,12 +71,9 @@ class Solver(object):
         x_k = x0 
         x_kp1 = x0
 
-        #Handle case where x0 is a zero vector. Then let if be almost zero instead.
-        all_zeros = True
-        for i in range(len(x0)):
-            if not  x0[i] ==0:
-                all_zeros= False
-        if all_zeros==True:
+        # If sum(x0)=sum(xkm1) x0=x_km1=0, which will result in a 
+        # divide by zero in quasi-newton. Fix this by decreasing x_km1 slightly.
+        if np.sum(x0)==np.sum(x_km1):
             x_km1 = x0-np.array([0.00001*np.ones(len(x0))]).reshape(self.dimensions,1)
 
         g = self.compute_gradient(x_k)

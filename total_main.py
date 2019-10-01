@@ -1,10 +1,13 @@
 # -*- coding: utf-8 -*-
-import optimization
+import time
+
 import numpy as np
 import scipy.linalg as sl
 import scipy.optimize as opt
 import matplotlib.pyplot as plt
+
 import chebyquad_problem as cheb
+import optimization
 """
     This script tests our optimizer on one of three functions:
         - 1D: 5 degree polynomial
@@ -12,6 +15,7 @@ import chebyquad_problem as cheb
         - nD: Chebyquad problem
 """
 
+current_milli_time = lambda: int(round(time.time() * 1000))
 
 ''' ROSENBROCK PROBLEM '''
 def f(x):
@@ -67,9 +71,7 @@ newton_method = newton_methods[4]
 line_search_method = line_search_methods[2]
 
 cheby_bool = False
-#x0 = np.linspace(0,1,4)
-x0 = x0_options[12]
-x0 = [0.8]
+x0 = [0,0]
 
 
 
@@ -100,11 +102,23 @@ if len(x0)==1 and not cheby_bool:
     z1 = np.ndarray(len(x_values))
     for i in range(len(x_values)):
             z1[i] = f1(x_values[i])
-    plt.plot(x, z)        
+    plt.figure(1)
+    plt.ion()   
+    plt.plot(x, z)
+            
     plt.plot(x_values[0], z1[0], 'bo', color='r')
+    plt.title('Iteration: ' + str(0))
+    plt.draw()
+    plt.pause(1)
     for i in range(1,len(x_values)-2):
         plt.plot(x_values[i], z1[i], 'bo', color='b')
-    plt.plot(x_values[len(x_values)-1], z1[len(x_values)-1], 'bo', color='g')
+        plt.title('Iteration: ' + str(i))
+        plt.draw()
+        plt.pause(1)
+    plt.plot(x_values[len(x_values)-1], z1[len(x_values)-1], 'bo', color='y')
+    plt.title('Iteration: ' + str(len(x_values)-1))
+    plt.draw()
+    plt.ioff()
     plt.show()
     
 
@@ -131,17 +145,45 @@ elif len(x0)==2 and not cheby_bool:
     z = np.ndarray((len(x),len(y)))
     for i in range(0,len(x)):
         for j in range(0,len(y)):
-            z[i][j] = f(x[i],y[j])            
+            z[i][j] = f(x[i],y[j])      
+    plt.figure(1)
+    plt.ion()   
     contours = plt.contour(x,y,z.T,[5, 10,300,3000,3e4,3e5, 1e8])
     plt.clabel(contours,inline=1)
-    
+    plt.plot(x_values[0][0],x_values[0][0],'bo',color='r',markersize=4) 
     #Plot all steps.
-    plt.plot(x_values[0][0], x_values[0][1],  'bo', color = 'r')
-    for i in range(len(x_values)-2):
-        plt.plot(x_values[i+1][0], x_values[i+1][1],  'bo', color = 'b')        
-    plt.plot(x_values[len(x_values)-1][0], x_values[i+1][1],  'bo', color = 'g')
+    for i in range(1,len(x_values)-2):
+        plt.plot(x_values[i][0],x_values[i][0],'bo',color='b',markersize=4)
+        plt.title('Iteration: ' + str(i))
+        plt.draw()
+        plt.pause(.5)
+    plt.plot(x_values[-1][0],x_values[-1][1],'bo',color='y',markersize=6)
+    plt.ioff()
     plt.show()
+    # plt.plot(x_values[0][0], x_values[0][1],  'bo', color = 'r')
+    # for i in range(len(x_values)-2):
+    #     plt.plot(x_values[i+1][0], x_values[i+1][1],  'bo', color = 'b')        
+    # plt.plot(x_values[len(x_values)-1][0], x_values[i+1][1],  'bo', color = 'g')
+    # plt.show()
 
+if cheby_bool==True:
+    x0=np.linspace(0,1,4)
+    time1 = current_milli_time()
+    xmin= opt.fmin_bfgs(cheb.chebyquad,x0,cheb.gradchebyquad)  # should converge after 18 iterations
+    print('Required time: ' + str(current_milli_time()-time1) + 'ms')
+    fmin = cheb.chebyquad(xmin)
+    print('xmin ' + str(xmin))
+    print('fmin ' + str(fmin))
+ #   problem = optimization.Problem(chebyquad)
+    problem = optimization.Problem(cheb.chebyquad, cheb.gradchebyquad)
+    solver = optimization.Solver(problem, max_iterations=1000, tol=1e-6, grad_tol=1e-6, hess_tol=1e-3)
+    newton_methods = ['exact_newton', 'good_broyden', 'bad_broyden', \
+                  'davidon_fletcher_powell', 'broyden_fletcher_goldfarb_shanno']
+    line_search_methods = [None, 'exact_line_search', 'wolfe-powell', 'goldstein']
+    time2 = current_milli_time()
+    our_xmin, our_fmin, x_values, useless1, useless2 = \
+        solver.find_local_min(newton_methods[4], x0, line_search_methods[2])
+    print('Required time: ' + str(current_milli_time()-time2) + 'ms')
 
 
 
