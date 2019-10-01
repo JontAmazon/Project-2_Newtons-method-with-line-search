@@ -65,8 +65,8 @@ x0_options = [[1, 1],    #0
 newton_method = newton_methods[4]
 line_search_method = line_search_methods[2]
 
-cheby_bool = False
-x0 = [0.1]
+cheby_bool = True
+x0 = [0.8]
 #x0 = x0_options[13]
 #x0 = np.linspace(0,1,4) #OK?
 
@@ -131,8 +131,7 @@ elif len(x0)==2 and not cheby_bool:
     plt.plot(x_values[len(x_values)-1][0], x_values[i+1][1],  'bo', color = 'g')
     plt.show()
 
-if len(x0)>2 or cheby_bool==True:
-    x0=np.linspace(0,1,4)
+if cheby_bool==True:
     xmin= opt.fmin_bfgs(cheb.chebyquad,x0,cheb.gradchebyquad)  # should converge after 18 iterations  
     fmin = cheb.chebyquad(xmin)
     
