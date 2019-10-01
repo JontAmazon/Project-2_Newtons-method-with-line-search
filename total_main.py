@@ -69,7 +69,7 @@ solve_1D_polynomial = False
 solve_2D_rosenbrock = True
 solve_nD_chebyquad = False
 
-cheby_bool = True
+cheby_bool = False
 x0 = [1]
 x0 = x0_options[13]
 x0 = np.linspace(0,1,4) #OK?
@@ -135,7 +135,7 @@ elif len(x0)==2:
     plt.plot(x_values[len(x_values)-1][0], x_values[i+1][1],  'bo', color = 'g')
     plt.show()
 
-if cheby_bool:
+if len(x0)>2 or cheby_bool==True:
     x0=np.linspace(0,1,4)
     xmin= opt.fmin_bfgs(cheb.chebyquad,x0,cheb.gradchebyquad)  # should converge after 18 iterations  
     fmin = cheb.chebyquad(xmin)
@@ -148,13 +148,8 @@ if cheby_bool:
     line_search_methods = [None, 'exact_line_search', 'wolfe-powell', 'goldstein']
     our_xmin, our_fmin, x_values, useless1, useless2 = \
         solver.find_local_min(newton_methods[4], x0, line_search_methods[1])
-else:
-    problem = optimization.Problem(f)
-    solver = optimization.Solver(problem, dimensions=2, max_iterations=1000, \
-                                 tol=1e-5, grad_tol=1e-6, hess_tol=1e-3)
-    x, fmin, x_values, h_diff_values, h_quotient_values = \
-        solver.find_local_min(newton_method, x0, line_search_method, debug=True)
-        
+
+
 
 
 
