@@ -38,7 +38,7 @@ class Solver(object):
         """
         self.debug = debug
         self.dimensions = len(x0)
-
+        
         if debug:                           # TODO: ersätt med:  if rosenbrock
             def gradient(x): #EV TODO: ersätt med: "exact_gradient()"
                 grad = np.zeros((2,1))
@@ -63,6 +63,17 @@ class Solver(object):
         h_quotient_values = [];
         
         x0 = np.array(x0).astype(float).reshape(self.dimensions,1) # Reshape the x_k to fit with the gradients and stuff
+        
+        #Check if x0 is located in the origin. If so, redo!
+        all_zeros = True
+        for i in range(len(x0)):
+            if not  x0[i] ==0:
+                all_zeros= False
+        if all_zeros==True:
+            print("Bad x-value, please don't initiate at the origin.")
+            return x0, self.objective_function(x0), x0, None, None
+
+        
         x_km1 = x0*0
         x_k = x0 
         x_kp1 = x0
