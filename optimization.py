@@ -115,9 +115,10 @@ class Solver(object):
             tresh = 1e-6
             if alpha < tresh:
                 alpha = self.line_search('exact_line_search', x_k, s_k)
-                print('s_k in cheat ' + str(s_k))
-                print('g in cheat ' + str(g))
-                print('cheating with exact alpha')
+                if self.debug:
+                    print('s_k in cheat ' + str(s_k))
+                    print('g in cheat ' + str(g))
+                    print('cheating with exact alpha')
                 cheat_count+=1
                 
             
@@ -216,8 +217,8 @@ class Solver(object):
         def step_function(alpha, x_k, s_k):
             return self.objective_function(x_k + alpha*s_k)
         x_copy = x_k.copy().reshape(self.dimensions,1)
-        guess = 1 # Guess for the scipy optimizer. Don't know what is a reasonable guess. Maybe alpha_k-1. Or just 1?
-        alpha_k = scipy.optimize.fmin(step_function,guess,args=(x_copy,s_k))
+        guess = 1 # Guess for the scipy optimizer
+        alpha_k = scipy.optimize.fmin(step_function,guess,args=(x_copy,s_k),disp=False) 
         return alpha_k
     
     
