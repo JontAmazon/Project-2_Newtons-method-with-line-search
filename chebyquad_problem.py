@@ -87,8 +87,8 @@ if __name__ == '__main__':
     xmin= so.fmin_bfgs(chebyquad,x0,gradchebyquad)  # should converge after 18 iterations  
     fmin = chebyquad(xmin)
     
-    problem = optimization.Problem(chebyquad)
-#    problem = optimization.Problem(chebyquad, gradchebyquad)
+ #   problem = optimization.Problem(chebyquad)
+    problem = optimization.Problem(chebyquad, gradchebyquad)
     solver = optimization.Solver(problem, max_iterations=1000, tol=1e-5, grad_tol=1e-6, hess_tol=1e-3)
     newton_methods = ['exact_newton', 'good_broyden', 'bad_broyden', \
                   'davidon_fletcher_powell', 'broyden_fletcher_goldfarb_shanno']

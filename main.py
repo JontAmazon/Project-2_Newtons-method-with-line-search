@@ -28,6 +28,13 @@ def G(x):
 def f1(x):
     return x**5 + 3.5*x**4 - 2.5*x**3 -12.5*x**2 + 1.5*x + 9
 
+def g2(x):
+    return 14*x**4 + 14*x**3 - 7.5*x**2 - 25*x + 1.5
+
+def G2(x):
+    return 20*x**3 + 42*x**2 - 15*x - 25
+
+
 
 ''' MAIN PROGRAM '''
 problem = optimization.Problem(f)
