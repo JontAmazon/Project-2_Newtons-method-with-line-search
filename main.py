@@ -66,7 +66,7 @@ x0_options = [[1, 1],    #0
               [1000,1000]]#15
 x0 = x0_options[13]
 newton_method = newton_methods[4]
-line_search_method = line_search_methods[1]
+line_search_method = line_search_methods[2]
 x, fmin, x_values, h_diff_values, h_quotient_values = \
     solver.find_local_min(newton_method, x0, line_search_method, debug=True)
 
