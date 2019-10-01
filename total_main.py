@@ -38,7 +38,7 @@ def G2(x):
 
 
 
-''' MAIN PROGRAM '''
+''' STANDARD INPUT CHOICES '''
 newton_methods = ['exact_newton', 'good_broyden', 'bad_broyden', \
                   'davidon_fletcher_powell', 'broyden_fletcher_goldfarb_shanno']
 line_search_methods = [None, 'exact_line_search', 'wolfe-powell', 'goldstein']
@@ -62,19 +62,21 @@ x0_options = [[1, 1],    #0
               [-5, -5],   #17
               [-10, -10]] #18
 
+''' MAIN PROGRAM '''
 newton_method = newton_methods[4]
 line_search_method = line_search_methods[2]
 
-cheby_bool = True
+cheby_bool = False
+#x0 = np.linspace(0,1,4)
 #x0 = [.5]
-#x0 = x0_options[13]
-x0 = np.linspace(0,1,4) #OK?
+x0 = x0_options[12]
+
+
 
 
 if len(x0)==1 and not cheby_bool:
     problem = optimization.Problem(f1)
-    solver = optimization.Solver(problem, dimensions=1, max_iterations=1000, \
-                                 tol=1e-5, grad_tol=1e-6, hess_tol=1e-3)
+    solver = optimization.Solver(problem, tol=1e-5, grad_tol=1e-6)
     x, fmin, x_values, useless1, useless2 = \
         solver.find_local_min(newton_method, x0, line_search_method, debug=True)
 
@@ -98,8 +100,7 @@ if len(x0)==1 and not cheby_bool:
 
 elif len(x0)==2 and not cheby_bool:
     problem = optimization.Problem(f)
-    solver = optimization.Solver(problem, dimensions=2, max_iterations=1000, \
-                                 tol=1e-5, grad_tol=1e-6, hess_tol=1e-3)
+    solver = optimization.Solver(problem, tol=1e-5, grad_tol=1e-6)
     x, fmin, x_values, h_diff_values, h_quotient_values = \
         solver.find_local_min(newton_method, x0, line_search_method, debug=True)
 
@@ -113,11 +114,11 @@ elif len(x0)==2 and not cheby_bool:
 
     """PLOT"""
     #Plot countours.
+    def f(x,y): #Rosenbrock function.
+        return 100*(y - x**2)**2 + (1 - x)**2
     x = np.linspace(np.min(x_values[:][0])-10, np.max(x_values[:][0])+10,1000)
     y = np.linspace(np.min(x_values[:][1])-10, np.max(x_values[:][1])+20,1000)
     z = np.ndarray((len(x),len(y)))
-    def f(x,y):
-        return 100*(y - x**2)**2 + (1 - x)**2
     for i in range(0,len(x)):
         for j in range(0,len(y)):
             z[i][j] = f(x[i],y[j])            
@@ -137,7 +138,7 @@ if cheby_bool==True:
     
  #   problem = optimization.Problem(chebyquad)
     problem = optimization.Problem(cheb.chebyquad, cheb.gradchebyquad)
-    solver = optimization.Solver(problem, max_iterations=1000,dimensions=len(x), tol=1e-5, grad_tol=1e-6, hess_tol=1e-3)
+    solver = optimization.Solver(problem, max_iterations=1000,dimensions=len(x0), tol=1e-5, grad_tol=1e-6, hess_tol=1e-3)
     newton_methods = ['exact_newton', 'good_broyden', 'bad_broyden', \
                   'davidon_fletcher_powell', 'broyden_fletcher_goldfarb_shanno']
     line_search_methods = [None, 'exact_line_search', 'wolfe-powell', 'goldstein']

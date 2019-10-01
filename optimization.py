@@ -17,7 +17,7 @@ class Problem(object):
         
 
 class Solver(object):
-    def __init__(self, problem, dimensions=None, tol=1e-5, max_iterations=400, grad_tol=1e-6, hess_tol=1e-3, tao=0.1, chi=9):
+    def __init__(self, problem, tol=1e-5, max_iterations=1000, grad_tol=1e-6, hess_tol=1e-3, tao=0.1, chi=9):
         self.obj_func = problem.objective_function
         self.gradient_function = problem.gradient_function #(might be equal to None).
         self.hessian_function = problem.hessian_function #(might be equal to None).
@@ -27,10 +27,6 @@ class Solver(object):
         self.max_iterations = max_iterations
         self.tao = tao
         self.chi = chi
-        
-        if dimensions is not None:
-            self.dimensions = dimensions #this can probably be removed in the final version.
-                                        #just want it for debugging purposes.
         self.feval = 0
         self.geval = 0
         
@@ -45,16 +41,15 @@ class Solver(object):
         """
         self.debug = debug
         self.dimensions = len(x0)
-        
-        if debug:                           # TODO: ersätt med:  if rosenbrock
-            def gradient(x): #EV TODO: ersätt med: "exact_gradient()"
+        if self.dimensions==2: #DEFINE THIS FOR TASK 12:
+            def gradient(x):
                 grad = np.zeros((2,1))
                 grad[0,0] = 400*x[0]**3 - 400*x[0]*x[1] + 2*x[0] - 2
                 grad[1,0] = -200*x[0]**2 + 200*x[1]
                 #print('grad '+ str(grad))
                 return grad
             
-            def G(x):        #EV TODO: ersätt med "exact_hessian()"
+            def G(x):
                 hess = np.zeros((2,2))
                 hess[0,0] = 1200*x[0]**2 - 400*x[1] + 2
                 hess[0,1] = hess[1,0] = -400*x[0]
@@ -69,16 +64,14 @@ class Solver(object):
         h_diff_values = [];
         h_quotient_values = [];
         
-        x0 = np.array(x0).astype(float).reshape(self.dimensions,1) # Reshape the x_k to fit with the gradients and stuff
-        
-        #Check if x0 is located in the origin. If so, redo!
-        
-
+        #Reshape the x_k to fit with the gradients and stuff:
+        x0 = np.array(x0).astype(float).reshape(self.dimensions,1)
         
         x_km1 = x0*0.9
         x_k = x0 
         x_kp1 = x0
 
+        #Handle case where x0 is a zero vector. Then let if be almost zero instead.
         all_zeros = True
         for i in range(len(x0)):
             if not  x0[i] ==0:
@@ -88,15 +81,14 @@ class Solver(object):
 
         g = self.compute_gradient(x_k)
         H = sl.inv(self.compute_hessian(x_k))
-        cheat_count=0
+        cheat_count=0 #Used for inexact line search. Number of steps it applies exact line search instead.
         for i in range(self.max_iterations): 
             
             #Save the current x_k in a list for plotting
             x_values.append(x_k)
-            if debug:
-                if self.dimensions==2: # TASK 12.
-                    h_diff_values.append(sl.norm(H - sl.inv(G(x_k)),2))
-                    h_quotient_values.append(sl.norm(H,2) / sl.norm(sl.inv(G(x_k),2)))
+            if self.dimensions==2: #TASK 12.
+                h_diff_values.append(sl.norm(H - sl.inv(G(x_k)),2))
+                h_quotient_values.append(sl.norm(H,2) / sl.norm(sl.inv(G(x_k),2)))
             
             if self.debug:
                     print('\nIteration         #' + str(i))
@@ -106,7 +98,6 @@ class Solver(object):
                     #print('||H - H_corr||:  ' + str(sl.norm(H - sl.inv(G(x_k)),2)))
 
             if sl.norm(g, 2) < self.tol:
-                #print('||g|| < tol ==> We are done if only G > 0')
                 hess = self.compute_hessian(x_kp1)
                 if self.is_positive_definite(hess):
                     print('\nYaaay! Local minima found after ' + str(i) + ' iterations.')
@@ -116,19 +107,15 @@ class Solver(object):
                     print('    Optimal f: ' + str(self.objective_function(x_k)))
                     print('We cheated ' + str(cheat_count) + ' time(s)... ;)')
                     return x_k, self.objective_function(x_k), x_values, h_diff_values, h_quotient_values
-                #print('Sadly, it was not the case.\n')
             s_k = -(H @ g) #Newton direction
             alpha = self.line_search(line_search_method, x_k, s_k) 
-            tresh = 1e-6
-            if alpha < tresh:
+            thresh = 1e-6
+            if alpha < thresh:
                 alpha = self.line_search('exact_line_search', x_k, s_k)
-                if self.debug:
-                    print('s_k in cheat ' + str(s_k))
-                    print('g in cheat ' + str(g))
-                    print('cheating with exact alpha')
                 cheat_count+=1
-                
-            
+                if self.debug:
+                    print('cheating with exact alpha')
+                    print('g in cheat:   ' + str(g))
             if self.debug:
                     print('||s_k||:           ' + str(sl.norm(H@g, 2)))
                     print('alpha:             ' + str(alpha))
@@ -177,20 +164,17 @@ class Solver(object):
         gamma_k = self.compute_gradient(x_k)-self.compute_gradient(x_km1)
         a = (delta_k@delta_k.T)/float(delta_k.T@gamma_k)
         b = H@np.outer(gamma_k,gamma_k)@H/(gamma_k.T@H@gamma_k)
-
         return H + a - b
     
     def broyden_fletcher_goldfarb_shanno(self,H,x_k,x_km1):
         # Superposition of np column "matrix" results in concatenation,
         # so we need to transpose delta_k to row matrix and then transpose back
         delta_k = (x_k.T - x_km1.T).T
-
         gamma_k = self.compute_gradient(x_k) - self.compute_gradient(x_km1)
         inner = float(gamma_k.T@H@gamma_k/(float(delta_k.T@gamma_k)))
         outer = (delta_k@delta_k.T)/float(delta_k.T@gamma_k)
         a = (1+inner)*outer
         b = (delta_k@gamma_k.T@H + H@gamma_k@delta_k.T)/(float(delta_k.T@gamma_k))
-        
         return H + a - b
 
     # Python-switch statement that calls the relevant quasi newton method.
@@ -203,7 +187,6 @@ class Solver(object):
         }
         return method[quasi_newton_method](H, x_k, x_km1)
         raise Exception('Invalid input for Quasi-Newton method.')
-    
     
     
     def line_search(self, line_search_method, x_k, s_k):
@@ -240,18 +223,16 @@ class Solver(object):
         self.rho = 0.01
         self.sigma = 0.1
             
-        #Initiate alpha_L and alpha_U
+        #Initiate alpha_L, alpha_U and alpha_0
         alpha_L = 0
-        alpha_U = 10**2
-        
-        #Initiate alpha_0 by taking the average of the boundary values
+        alpha_U = 10**2        
         #alpha_0 = (alpha_L + alpha_U)/2
         alpha_0 = 0.05
-        #ALTERNATIVELY: alpha_0 = np.random.rand(alpha_L, alpha_U, 1)
             
         #Compute the initial values of the function and the corresponding gradients
         f_alpha_0, f_alpha_L, df_alpha_0, df_alpha_L = self.compute_f_and_df(alpha_0, alpha_L,x_k,s_k)
-        #Initiate the boolean values of lc and rc 
+
+        #Initiate the boolean variables lc and rc 
         lc = False
         rc = False
          #Check if the conditions are fullfilled, return booleans lc and rc
@@ -313,34 +294,29 @@ class Solver(object):
 
     def lc_rc_wolfe_powell(self, alpha_0, alpha_L, x_k, s_k, f_alpha_0, \
                            f_alpha_L, df_alpha_0, df_alpha_L):
-        '''
-        Returns lc = True and rc = True if the Wolfe-Powell conditions
-        are fulfilled for alpha_0 and alpha_L.
-                                                                        '''                
-        #Define the boolean return variables
+        ''' Returns lc=True and rc=True if the Wolfe-Powell conditions
+        are fulfilled for alpha_0 and alpha_L. '''                
+        #Define the boolean variables to be returned.
         lc = False
-        rc = False
-            
-        if df_alpha_0 >= self.sigma * df_alpha_L:                      # this is regular Wolfe
+        rc = False            
+        if df_alpha_0 >= self.sigma * df_alpha_L:      # this is regular Wolfe
             lc = True
 
-#        if abs(df_alpha_0) <= self.sigma * abs(df_alpha_L):           # this is strong Wolfe
+#        if abs(df_alpha_0) <= self.sigma * abs(df_alpha_L):    # strong Wolfe
 #            lc = True
     
         if f_alpha_0 <= f_alpha_L + self.rho*(alpha_0 - alpha_L)*df_alpha_L:
             rc = True
-            
-        #TODO: Should we use the strong Wolfe condition as well?
                 
         return lc, rc
 
     def lc_rc_goldstein(self, alpha_0, alpha_L, x_k, s_k, f_alpha_0, \
                            f_alpha_L, df_alpha_0, df_alpha_L):
-        '''TODO'''
+        ''' Returns lc=True and rc=True if the Goldstein conditions
+        are fulfilled for alpha_0 and alpha_L. '''                
         #Define the boolean return variables
         lc = False
         rc = False
-        
         if f_alpha_0 >= f_alpha_L + (1-self.rho)*(alpha_0-alpha_L)*df_alpha_L:
             lc = True
             
@@ -348,11 +324,13 @@ class Solver(object):
             rc = True
             
         return lc, rc
-        
-
 
     def compute_gradient(self, x):
+        ''' Estimates the gradient of the problem's objective function at
+        point x, using a (central) finite difference. If the solver has been
+        provided with an exact formula for the gradient, this is used instead.'''
         self.geval+=1
+        
         # Do we have an explicit function for the gradient? Then use it!
         if self.gradient_function != None:
             g = self.gradient_function(x)
@@ -364,7 +342,6 @@ class Solver(object):
         gradient = np.zeros((n,1))
         f = self.objective_function
         delta = self.grad_tol
-        #delta = self.grad_tol * sl.norm(x, 2)
         
         for i in range(n):
             x1 = x.copy()
@@ -375,9 +352,13 @@ class Solver(object):
         return gradient
     
     def compute_hessian(self, x):
-        # The i:th column of the Hessian G_i equals g(x) differentiated w.r.t. x_i
+        ''' Estimates the hessian of the problem's objective function at
+        point x, using a (central) finite difference. If the solver has been
+        provided with an exact formula for the hessian, this is used instead.'''
+        # Central finte difference:
+        # The i:th column of the Hessian, G_i, should equal g(x) differentiated w.r.t. x_i
         # This is approximated with a finite difference:
-        # G_i = (g(x + tol*e_i) - g(x))/tol
+        # G_i = (g(x + tol*e_i) - g(x - tol*e_i)) / (2*tol)
         if self.hessian_function != None:
             return self.hessian_function(x)
 
@@ -385,7 +366,6 @@ class Solver(object):
         hessian = np.zeros((n,n))
         g = self.compute_gradient
         delta = self.hess_tol
-        #delta = self.hess_tol * sl.norm(x, 2)
         
         for i in range(n):
             x1 = x.copy()
@@ -393,7 +373,7 @@ class Solver(object):
             x1[i] = x1[i] + delta
             x2[i] = x2[i] - delta            
             hessian[:,i] = ((g(x1) - g(x2)) / (2*delta)).T                                
-        hessian = 1/2*hessian + 1/2*np.conj(hessian.T)
+        hessian = 1/2*hessian + 1/2*np.conj(hessian.T) #since the hessian should be symmetric.
         return hessian
 
     def is_positive_definite(self, A):
