@@ -65,10 +65,13 @@ x0_options = [[1, 1],    #0
 newton_method = newton_methods[4]
 line_search_method = line_search_methods[2]
 
-cheby_bool = True
-#x0 = [.5]
+
+cheby_bool = False
+x0 = [0.8]
+
+
 #x0 = x0_options[13]
-x0 = np.linspace(0,1,4) #OK?
+#x0 = np.linspace(0,1,4) #OK?
 
 
 if len(x0)==1 and not cheby_bool:
