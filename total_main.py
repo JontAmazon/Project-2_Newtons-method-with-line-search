@@ -68,10 +68,21 @@ line_search_method = line_search_methods[2]
 
 cheby_bool = False
 #x0 = np.linspace(0,1,4)
-#x0 = [.5]
 x0 = x0_options[12]
+x0 = [0.8]
 
 
+
+''' THE THREE DIFFERENT CASES BELOW '''
+if cheby_bool==True:
+    xmin= opt.fmin_bfgs(cheb.chebyquad,x0,cheb.gradchebyquad)  # should converge after 18 iterations  
+    fmin = cheb.chebyquad(xmin)
+    
+ #   problem = optimization.Problem(chebyquad)
+    problem = optimization.Problem(cheb.chebyquad, cheb.gradchebyquad)
+    solver = optimization.Solver(problem, tol=1e-5, grad_tol=1e-6)
+    our_xmin, our_fmin, x_values, useless1, useless2 = \
+        solver.find_local_min(newton_methods[4], x0, line_search_methods[1])
 
 
 if len(x0)==1 and not cheby_bool:
@@ -95,7 +106,6 @@ if len(x0)==1 and not cheby_bool:
         plt.plot(x_values[i], z1[i], 'bo', color='b')
     plt.plot(x_values[len(x_values)-1], z1[len(x_values)-1], 'bo', color='g')
     plt.show()
-    #plt.close()
     
 
 elif len(x0)==2 and not cheby_bool:
@@ -132,18 +142,6 @@ elif len(x0)==2 and not cheby_bool:
     plt.plot(x_values[len(x_values)-1][0], x_values[i+1][1],  'bo', color = 'g')
     plt.show()
 
-if cheby_bool==True:
-    xmin= opt.fmin_bfgs(cheb.chebyquad,x0,cheb.gradchebyquad)  # should converge after 18 iterations  
-    fmin = cheb.chebyquad(xmin)
-    
- #   problem = optimization.Problem(chebyquad)
-    problem = optimization.Problem(cheb.chebyquad, cheb.gradchebyquad)
-    solver = optimization.Solver(problem, max_iterations=1000,dimensions=len(x0), tol=1e-5, grad_tol=1e-6, hess_tol=1e-3)
-    newton_methods = ['exact_newton', 'good_broyden', 'bad_broyden', \
-                  'davidon_fletcher_powell', 'broyden_fletcher_goldfarb_shanno']
-    line_search_methods = [None, 'exact_line_search', 'wolfe-powell', 'goldstein']
-    our_xmin, our_fmin, x_values, useless1, useless2 = \
-        solver.find_local_min(newton_methods[4], x0, line_search_methods[1])
 
 
 

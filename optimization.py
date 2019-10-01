@@ -120,8 +120,11 @@ class Solver(object):
                     print('||s_k||:           ' + str(sl.norm(H@g, 2)))
                     print('alpha:             ' + str(alpha))
                     print('x_k'                 + str(x_k ))
-            
-            x_kp1 = x_k + alpha*s_k
+                    #print('step length:'        + str(alpha*s_k))
+            step = alpha*s_k
+            if sl.norm(step,2)>50 and len(x_k)==1:
+                step = step/(sl.norm(step,2)/3)
+            x_kp1 = x_k + step
             g = self.compute_gradient(x_kp1)
             H = self.quasi_newton(quasi_newton_method, H, x_k, x_km1)
             x_km1 = x_k
@@ -211,6 +214,8 @@ class Solver(object):
         x_copy = x_k.copy().reshape(self.dimensions,1)
         guess = 1 # Guess for the scipy optimizer
         alpha_k = scipy.optimize.fmin(step_function,guess,args=(x_copy,s_k),disp=False) 
+        if abs(alpha_k) > 10000: # Check to see if fmin fucks up and gives an alpha of order 1e28. Then just use alpha =1
+            alpha_k = alpha_k/abs(alpha_k) # Set to 1, but with right sign
         return alpha_k
     
     
