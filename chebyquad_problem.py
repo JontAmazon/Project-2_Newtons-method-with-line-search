@@ -83,7 +83,7 @@ def gradchebyquad(x):
 
 
 if __name__ == '__main__':
-    x0=linspace(0,1,11)
+    x0=linspace(0,1,4)
     xmin= so.fmin_bfgs(chebyquad,x0,gradchebyquad)  # should converge after 18 iterations  
     fmin = chebyquad(xmin)
     

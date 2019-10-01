@@ -4,7 +4,13 @@ import numpy as np
 import scipy.linalg as sl
 import scipy.optimize as opt
 import matplotlib.pyplot as plt
-'''TODO SIST = lägg till #func_eval och #grad_eval'''
+''' KAN VA BRA ATT HA: '''
+# För att testa våra funktioner för att beräkna grad och hess:
+#print(solver.compute_gradient(x0) / g(x0))  
+#print(solver.compute_hessian(x0) / G(x0))
+
+#xx, ffmin = opt.fmin_bfgs(f, np.array(x0))
+#optimum = opt.minimize(f, np.array(x0))
 
 
 ''' ROSENBROCK PROBLEM '''
@@ -75,20 +81,20 @@ x, fmin, x_values, h_diff_values, h_quotient_values = \
     The first one contains values for ||H - H_correct|| at each step.
     The second one contains values for ||H|| / ||H_correct||. Let's plot this."""
         #Task 12 considers newton_methods[4], plus ANY line_search_method.
-plt.plot(range(len(h_diff_values)-1), h_diff_values[1:])
-plt.figure()
-plt.plot(range(len(h_quotient_values)-1), h_quotient_values[1:]) #
+#plt.plot(range(len(h_diff_values)-1), h_diff_values[1:])
+#plt.figure()
+#plt.plot(range(len(h_quotient_values)-1), h_quotient_values[1:]) #
 
 
 
 
-''' KAN VA BRA ATT HA: '''
-# För att testa våra funktioner för att beräkna grad och hess:
-#print(solver.compute_gradient(x0) / g(x0))  
-#print(solver.compute_hessian(x0) / G(x0))
 
-#xx, ffmin = opt.fmin_bfgs(f, np.array(x0))
-#optimum = opt.minimize(f, np.array(x0))
+
+
+
+
+
+
 
 
 
