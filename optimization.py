@@ -78,7 +78,6 @@ class Solver(object):
                 h_quotient_values.append(sl.norm(H,2) / sl.norm(sl.inv(G(x_k),2)))
             
             if self.debug:
-                if i < 5:
                     print('\nIteration         #' + str(i))
                     #print('x_k:             ' + str(x_k.T[0]))
                     #print('f(x_k):          ' + str(self.objective_function(x_k)))                
@@ -351,7 +350,7 @@ class Solver(object):
             x1[i] = x1[i] + delta
             x2[i] = x2[i] - delta
             gradient[i][0] = (f(x1) - f(x2)) / (2*delta)
-            self.feval = self.feval + 2
+            self.feval += 2
         self.geval+=1
         return gradient
     
@@ -373,8 +372,7 @@ class Solver(object):
             x2 = x.copy()
             x1[i] = x1[i] + delta
             x2[i] = x2[i] - delta            
-            hessian[:,i] = ((g(x1) - g(x2)) / (2*delta)).T
-            self.geval = self.geval + 2                                         #OK?
+            hessian[:,i] = ((g(x1) - g(x2)) / (2*delta)).T                                
         hessian = 1/2*hessian + 1/2*np.conj(hessian.T)
         return hessian
 
