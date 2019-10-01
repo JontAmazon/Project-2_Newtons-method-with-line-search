@@ -134,8 +134,10 @@ class Solver(object):
                     print('alpha:             ' + str(alpha))
                     print('x_k'                 + str(x_k ))
                     #print('step length:'        + str(alpha*s_k))
-            
-            x_kp1 = x_k + alpha*s_k
+            step = alpha*s_k
+            if sl.norm(step,2)>50 and len(x_k)==1:
+                step = step/(sl.norm(step,2)/3)
+            x_kp1 = x_k + step
             g = self.compute_gradient(x_kp1)
             H = self.quasi_newton(quasi_newton_method, H, x_k, x_km1)
             x_km1 = x_k
