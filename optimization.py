@@ -109,7 +109,6 @@ class Solver(object):
                 
             
             if self.debug:
-                if i < 5000:
                     print('||s_k||:           ' + str(sl.norm(H@g, 2)))
                     print('alpha:             ' + str(alpha))
                     print('x_k'                 + str(x_k ))
@@ -205,8 +204,6 @@ class Solver(object):
             return self.objective_function(x_k + alpha*s_k)
         x_copy = x_k.copy().reshape(self.dimensions,1)
         guess = 1 # Guess for the scipy optimizer. Don't know what is a reasonable guess. Maybe alpha_k-1. Or just 1?
-        #optimization_res = scipy.optimize.minimize(step_function, guess, args=(x_copy,s_k)) #returns some kind of optimization object, so we need to extract the x-value
-        #alpha_k = optimization_res.x
         alpha_k = scipy.optimize.fmin(step_function,guess,args=(x_copy,s_k))
         return alpha_k
     
@@ -248,8 +245,6 @@ class Solver(object):
             j = j+1
             if not lc:
                 #Implementation of Block 1 in the slides
-                #if abs(df_alpha_L - df_alpha_0) <= 0.0001:
-                #    print("Look here")
                 delta_alpha_0 = (alpha_0 - alpha_L)*df_alpha_0/(df_alpha_L - df_alpha_0) #Compute delta(alpha_0) by extrapolation
                 delta_alpha_0 = np.max([delta_alpha_0, self.tao*(alpha_0 - alpha_L)]) #Make sure delta_alpha_0 is not too small                
                 delta_alpha_0 = np.min([delta_alpha_0, self.chi*(alpha_0 - alpha_L)]) #Make sure delta_alpha_0 is not too large
@@ -286,7 +281,6 @@ class Solver(object):
         alpha_L_eval = x_copy + alpha_L * s_k
         
         #Evaluate the gradient for the two points defined above (using the chain rule, thus s_k)
-        g0l = self.compute_gradient(alpha_0_eval)
         df_alpha_0 = float(self.compute_gradient(alpha_0_eval).T @ s_k)
         df_alpha_L = float(self.compute_gradient(alpha_L_eval).T @ s_k)
         #Evaluate the function in the same points
@@ -394,62 +388,6 @@ class Solver(object):
         else:
             return True
 
-    
-
-
-
-    ''' CODING INEXACT LINE SEARCH AGAIN... TO MAYBE DISCOVER AN ERROR '''
-    def inexact_line_search2(self, line_search_method, x_k, s_k):
-        """
-            Inexact line search method for computing alpha^(k), using either 
-            Wolfe-Powell or Goldstein conditions.
-        """
-        self.rho = 0.1
-        self.sigma = 0.7
-        self.tao = 0.1
-        self.chi = 9
-            
-        a_L = 1e-3
-        a_U = 1e5    
-        a_0 = 1 # testa 1e1
-            
-        f_alpha_0, f_alpha_L, df_alpha_0, df_alpha_L = self.compute_f_and_df(alpha_0, alpha_L,x_k,s_k)
-            
-        if line_search_method=='wolfe-powell':
-            lc, rc = self.lc_rc_wolfe_powell(alpha_0, alpha_L, x_k, s_k, f_alpha_0, \
-                                        f_alpha_L, df_alpha_0, df_alpha_L)
-        if line_search_method=='goldstein':
-            lc, rc = self.lc_rc_goldstein(alpha_0, alpha_L, x_k, s_k, f_alpha_0, \
-                                        f_alpha_L, df_alpha_0, df_alpha_L)
-        
-        
-    #delta_alpha_0
-    #df_alpha_0
-    #df_alpha_L
-    #f_alpha_0
-    #f_alpha_L
-    #bar_alpha_0
-        while (not lc or not rc):
-            if not lc:
-                pass
-                #Block 1:
-                #...
-                
-            else:
-                pass
-                #Block 2:
-                #...
-                
-            f_alpha_0, f_alpha_L, df_alpha_0, df_alpha_L = self.compute_f_and_df(alpha_0, alpha_L, x_k, s_k)
-            
-            if line_search_method=='wolfe-powell':
-                lc, rc = self.lc_rc_wolfe_powell(alpha_0, alpha_L, x_k, s_k, f_alpha_0, \
-                                        f_alpha_L, df_alpha_0, df_alpha_L)
-            if line_search_method=='goldstein':
-                lc, rc = self.lc_rc_goldstein(alpha_0, alpha_L, x_k, s_k, f_alpha_0, \
-                                        f_alpha_L, df_alpha_0, df_alpha_L)
-            
-        return a_0
 
 
 
