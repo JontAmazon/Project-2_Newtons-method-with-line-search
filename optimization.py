@@ -66,10 +66,9 @@ class Solver(object):
         x_km1 = x0*0
         x_k = x0 
         x_kp1 = x0
-        
         g = self.compute_gradient(x_k)
         H = sl.inv(self.compute_hessian(x_k))
-
+        
         for i in range(self.max_iterations): 
             
             #Save the current x_k in a list for plotting
@@ -192,8 +191,9 @@ class Solver(object):
             return self.objective_function(x_k + alpha*s_k)
         x_copy = x_k.copy().reshape(self.dimensions,1)
         guess = 1 # Guess for the scipy optimizer. Don't know what is a reasonable guess. Maybe alpha_k-1. Or just 1?
-        optimization_res = scipy.optimize.minimize(step_function, guess, args=(x_copy,s_k)) #returns some kind of optimization object, so we need to extract the x-value
-        alpha_k = optimization_res.x
+        #optimization_res = scipy.optimize.minimize(step_function, guess, args=(x_copy,s_k)) #returns some kind of optimization object, so we need to extract the x-value
+        #alpha_k = optimization_res.x
+        alpha_k = scipy.optimize.fmin(step_function,guess,args=(x_copy,s_k))
         #below returns the new alpha_k. Don't know what is better
         return alpha_k
     
@@ -215,7 +215,7 @@ class Solver(object):
         
         #Initiate alpha_0 by taking the average of the boundary values
         #alpha_0 = (alpha_L + alpha_U)/2
-        alpha_0 = 1
+        alpha_0 = 0.05
         #ALTERNATIVELY: alpha_0 = np.random.rand(alpha_L, alpha_U, 1)
             
         #Compute the initial values of the function and the corresponding gradients
