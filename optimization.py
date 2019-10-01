@@ -28,7 +28,8 @@ class Solver(object):
         if dimensions is not None:
             self.dimensions = dimensions #this can probably be removed in the final version.
                                         #just want it for debugging purposes.
-
+        self.feval = 0
+        self.geval = 0
 
     def find_local_min(self, quasi_newton_method, x0, line_search_method=None, debug=False):
         """Solves the problem of finding a local minimum of the function 
@@ -78,9 +79,9 @@ class Solver(object):
                 h_quotient_values.append(sl.norm(H,2) / sl.norm(sl.inv(G(x_k),2)))
             
             if self.debug:
-                print('                 #' + str(i))
-                print('x_k:             ' + str(x_k.T[0]))
-                print('f(x_k):          ' + str(self.objective_function(x_k)))                
+                print('Iteration         #' + str(i))
+                #print('x_k:             ' + str(x_k.T[0]))
+                #print('f(x_k):          ' + str(self.objective_function(x_k)))                
                 #print('||g - g_corr||:  ' + str(sl.norm(g - gradient(x_k),2)))
                 #print('||H - H_corr||:  ' + str(sl.norm(H - sl.inv(G(x_k)),2)))
 
@@ -88,9 +89,10 @@ class Solver(object):
                 #print('||g|| < tol ==> We are done if only G > 0')
                 hess = self.compute_hessian(x_kp1)
                 if self.is_positive_definite(hess):
-                    print('Yaaay! Local minima found after ' + str(i) + ' iterations.')
-                    print('Optimal x: ' + str(x_k.T))
-                    print('Optimal f: ' + str(self.objective_function(x_k)))
+                    print('\nYaaay! Local minima found after ' + str(i) + ' iterations.')
+                    print('    #')
+                    print('    Optimal x: ' + str(x_k.T))
+                    print('    Optimal f: ' + str(self.objective_function(x_k)))
                     return x_k, self.objective_function(x_k), x_values, h_diff_values, h_quotient_values
                 #print('Sadly, it was not the case.\n')
             s_k = -(H @ g) #Newton direction
@@ -325,6 +327,7 @@ class Solver(object):
         # Do we have an explicit function for the gradient? Then use it!
         if self.gradient_function != None:
             g = self.gradient_function(x)
+            self.geval = self.geval + 1
             g = np.array([g[i] for i in range(len(g))])
             return g
         
@@ -341,6 +344,7 @@ class Solver(object):
             x1[i] = x1[i] + delta
             x2[i] = x2[i] - delta
             gradient[i][0] = (f(x1) - f(x2)) / (2*delta)
+            self.feval = self.feval + 2
         return gradient
     
     def compute_hessian(self, x):
