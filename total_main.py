@@ -70,9 +70,9 @@ solve_2D_rosenbrock = True
 solve_nD_chebyquad = False
 
 cheby_bool = False
-x0 = [1]
-x0 = x0_options[13]
-x0 = np.linspace(0,1,4) #OK?
+x0 = [0.1]
+#x0 = x0_options[13]
+#x0 = np.linspace(0,1,4) #OK?
 
 
 if len(x0)==1:
@@ -93,9 +93,9 @@ if len(x0)==1:
             z1[i] = f1(x_values[i])
     plt.plot(x, z)        
     plt.plot(x_values[0], z1[0], 'bo', color='r')
-    for i in range(len(x_values)-2):
-        plt.plot(x_values[i+1], z1[i+1], 'bo', color='b')
-    plt.plot(x_values[len(x_values)-1], z1[i+1], 'bo', color='g')
+    for i in range(1,len(x_values)-2):
+        plt.plot(x_values[i], z1[i], 'bo', color='b')
+    plt.plot(x_values[len(x_values)-1], z1[len(x_values)-1], 'bo', color='g')
     plt.show()
     #plt.close()
     
