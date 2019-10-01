@@ -65,17 +65,13 @@ x0_options = [[1, 1],    #0
 newton_method = newton_methods[4]
 line_search_method = line_search_methods[2]
 
-solve_1D_polynomial = False
-solve_2D_rosenbrock = True
-solve_nD_chebyquad = False
-
 cheby_bool = False
 x0 = [0.1]
 #x0 = x0_options[13]
 #x0 = np.linspace(0,1,4) #OK?
 
 
-if len(x0)==1:
+if len(x0)==1 and not cheby_bool:
     problem = optimization.Problem(f1)
     solver = optimization.Solver(problem, dimensions=1, max_iterations=1000, \
                                  tol=1e-5, grad_tol=1e-6, hess_tol=1e-3)
@@ -100,7 +96,7 @@ if len(x0)==1:
     #plt.close()
     
 
-elif len(x0)==2:
+elif len(x0)==2 and not cheby_bool:
     problem = optimization.Problem(f)
     solver = optimization.Solver(problem, dimensions=2, max_iterations=1000, \
                                  tol=1e-5, grad_tol=1e-6, hess_tol=1e-3)
