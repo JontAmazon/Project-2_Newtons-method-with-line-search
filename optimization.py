@@ -17,7 +17,7 @@ class Problem(object):
         
 
 class Solver(object):
-    def __init__(self, problem, dimensions=None, tol=1e-5, max_iterations=400, grad_tol=1e-6, hess_tol=1e-3):
+    def __init__(self, problem, dimensions=None, tol=1e-5, max_iterations=400, grad_tol=1e-6, hess_tol=1e-3, tao=0.1, chi=9):
         self.objective_function = problem.objective_function
         self.gradient_function = problem.gradient_function #(might be equal to None).
         self.hessian_function = problem.hessian_function #(might be equal to None).
@@ -25,6 +25,9 @@ class Solver(object):
         self.grad_tol = grad_tol
         self.hess_tol = hess_tol
         self.max_iterations = max_iterations
+        self.tao = tao
+        self.chi = chi
+        
         if dimensions is not None:
             self.dimensions = dimensions #this can probably be removed in the final version.
                                         #just want it for debugging purposes.
@@ -215,8 +218,6 @@ class Solver(object):
         #Define the default values for the method parameters
         self.rho = 0.01
         self.sigma = 0.1
-        self.tao = 0.1
-        self.chi = 9
             
         #Initiate alpha_L and alpha_U
         alpha_L = 0
