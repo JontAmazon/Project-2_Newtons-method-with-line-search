@@ -224,7 +224,6 @@ class Solver(object):
             
         #Compute the initial values of the function and the corresponding gradients
         f_alpha_0, f_alpha_L, df_alpha_0, df_alpha_L = self.compute_f_and_df(alpha_0, alpha_L,x_k,s_k)
-            
         #Initiate the boolean values of lc and rc 
         lc = False
         rc = False
@@ -349,6 +348,7 @@ class Solver(object):
             x2[i] = x2[i] - delta
             gradient[i][0] = (f(x1) - f(x2)) / (2*delta)
             self.feval = self.feval + 2
+        self.geval+=1
         return gradient
     
     def compute_hessian(self, x):
