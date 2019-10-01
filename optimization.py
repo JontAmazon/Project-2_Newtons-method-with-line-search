@@ -18,7 +18,7 @@ class Problem(object):
 
 class Solver(object):
     def __init__(self, problem, dimensions=None, tol=1e-5, max_iterations=400, grad_tol=1e-6, hess_tol=1e-3, tao=0.1, chi=9):
-        self.objective_function = problem.objective_function
+        self.obj_func = problem.objective_function
         self.gradient_function = problem.gradient_function #(might be equal to None).
         self.hessian_function = problem.hessian_function #(might be equal to None).
         self.tol = tol
@@ -33,6 +33,10 @@ class Solver(object):
                                         #just want it for debugging purposes.
         self.feval = 0
         self.geval = 0
+        
+    def objective_function(self, x):
+        self.feval+=1
+        return self.obj_func(x)
 
     def find_local_min(self, quasi_newton_method, x0, line_search_method=None, debug=False):
         """Solves the problem of finding a local minimum of the function 
@@ -81,7 +85,7 @@ class Solver(object):
                 all_zeros= False
         if all_zeros==True:
             x_km1 = x0-np.array([0.00001*np.ones(len(x0))]).reshape(self.dimensions,1)
-            
+
         g = self.compute_gradient(x_k)
         H = sl.inv(self.compute_hessian(x_k))
         cheat_count=0
@@ -180,11 +184,13 @@ class Solver(object):
         # Superposition of np column "matrix" results in concatenation,
         # so we need to transpose delta_k to row matrix and then transpose back
         delta_k = (x_k.T - x_km1.T).T
+
         gamma_k = self.compute_gradient(x_k) - self.compute_gradient(x_km1)
         inner = float(gamma_k.T@H@gamma_k/(float(delta_k.T@gamma_k)))
         outer = (delta_k@delta_k.T)/float(delta_k.T@gamma_k)
         a = (1+inner)*outer
         b = (delta_k@gamma_k.T@H + H@gamma_k@delta_k.T)/(float(delta_k.T@gamma_k))
+        
         return H + a - b
 
     # Python-switch statement that calls the relevant quasi newton method.
@@ -346,10 +352,10 @@ class Solver(object):
 
 
     def compute_gradient(self, x):
+        self.geval+=1
         # Do we have an explicit function for the gradient? Then use it!
         if self.gradient_function != None:
             g = self.gradient_function(x)
-            self.geval = self.geval + 1
             g = np.array([g[i] for i in range(len(g))])
             return g
         
@@ -366,8 +372,6 @@ class Solver(object):
             x1[i] = x1[i] + delta
             x2[i] = x2[i] - delta
             gradient[i][0] = (f(x1) - f(x2)) / (2*delta)
-            self.feval += 2
-        self.geval+=1
         return gradient
     
     def compute_hessian(self, x):
