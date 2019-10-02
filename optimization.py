@@ -10,6 +10,15 @@ import scipy
 
 
 class Problem(object):
+    """
+        The problem class assigns the problem properties.
+        "objective_function" is the function that should be investigated
+        "gradient_function" is optionally the gradient function to the objective 
+            function, should be of shape (n,1) where n is number of dimensions of 
+            the objective function
+        "hessian_function" is optionally the hessian function to the 
+            objective_function. Should be of shape (n,n)
+    """
     def __init__(self, objective_function, gradient_function=None, hessian_function=None):
         self.objective_function = objective_function
         self.gradient_function = gradient_function
@@ -17,14 +26,17 @@ class Problem(object):
         
 
 class Solver(object):
+    """
+        Solver class
+    """
     def __init__(self, problem, tol=1e-5, max_iterations=1000, grad_tol=1e-6, hess_tol=1e-3, tao=0.1, chi=9):
         self.obj_func = problem.objective_function
         self.gradient_function = problem.gradient_function #(might be equal to None).
         self.hessian_function = problem.hessian_function #(might be equal to None).
-        self.tol = tol
-        self.grad_tol = grad_tol
-        self.hess_tol = hess_tol
-        self.max_iterations = max_iterations
+        self.tol = tol   #toelarance of solution, 
+        self.grad_tol = grad_tol # determins the step size for computing the gradient
+        self.hess_tol = hess_tol # determins the step size for computing the hessian
+        self.max_iterations = max_iterations 
         self.tao = tao
         self.chi = chi
         self.feval = 0
@@ -36,8 +48,8 @@ class Solver(object):
 
     def find_local_min(self, quasi_newton_method, x0, line_search_method=None, debug=False):
         """Solves the problem of finding a local minimum of the function 
-            described in the input problem, using a Quasi-Newton method
-            together with line search.
+        described in the input problem, using a Quasi-Newton method
+        together with line search.
         """
         self.debug = debug
         self.dimensions = len(x0)
@@ -178,8 +190,9 @@ class Solver(object):
         b = (delta_k@gamma_k.T@H + H@gamma_k@delta_k.T)/(float(delta_k.T@gamma_k))
         return H + a - b
 
-    # Python-switch statement that calls the relevant quasi newton method.
     def quasi_newton(self, quasi_newton_method, H, x_k, x_km1):
+        '''Python-switch statement that calls the relevant quasi newton method.
+        '''
         method = {'exact_newton' : self.exact_newton,
             'good_broyden' : self.good_broyden,
             'bad_broyden' : self.bad_broyden,
@@ -191,9 +204,8 @@ class Solver(object):
     
     
     def line_search(self, line_search_method, x_k, s_k):
-       """
-           Returns alpha by the chosen line search method.
-       """
+       ''' Returns alpha by the chosen line search method.
+       '''
        if line_search_method==None:
            return 1
        if line_search_method=='exact_line_search':
@@ -205,8 +217,8 @@ class Solver(object):
        raise Exception('Invalid input for line search method.')
     
     def exact_line_search(self, x_k, s_k):
-    # exact line search method, gives alphak
-        
+        '''exact line search method, gives alphak
+        '''
         def step_function(alpha, x_k, s_k):
             return self.objective_function(x_k + alpha*s_k)
         x_copy = x_k.copy().reshape(self.dimensions,1)
@@ -218,10 +230,9 @@ class Solver(object):
     
     
     def inexact_line_search(self, line_search_method, x_k, s_k):
-        """
-            Inexact line search method for computing alpha^(k), using either 
-            Wolfe-Powell or Goldstein conditions.
-        """
+        '''Inexact line search method for computing alpha^(k), using either 
+        Wolfe-Powell or Goldstein conditions.
+        '''
         #Define the default values for the method parameters
         self.rho = 0.01
         self.sigma = 0.1
@@ -279,7 +290,7 @@ class Solver(object):
     def compute_f_and_df(self, alpha_0, alpha_L, x_k, s_k):
         '''Computes the function and the corresponding gradient evaluated 
         at alpha_0.
-                                                                        '''
+       '''
         x_copy = x_k.copy().reshape(self.dimensions,1)
         #Define the values on which to evaluate the function and the gradient
         alpha_0_eval = x_copy + alpha_0 * s_k
@@ -297,8 +308,9 @@ class Solver(object):
 
     def lc_rc_wolfe_powell(self, alpha_0, alpha_L, x_k, s_k, f_alpha_0, \
                            f_alpha_L, df_alpha_0, df_alpha_L):
-        ''' Returns lc=True and rc=True if the Wolfe-Powell conditions
-        are fulfilled for alpha_0 and alpha_L. '''                
+        '''Returns lc=True and rc=True if the Wolfe-Powell conditions
+        are fulfilled for alpha_0 and alpha_L. 
+        '''               
         #Define the boolean variables to be returned.
         lc = False
         rc = False            
@@ -315,8 +327,9 @@ class Solver(object):
 
     def lc_rc_goldstein(self, alpha_0, alpha_L, x_k, s_k, f_alpha_0, \
                            f_alpha_L, df_alpha_0, df_alpha_L):
-        ''' Returns lc=True and rc=True if the Goldstein conditions
-        are fulfilled for alpha_0 and alpha_L. '''                
+        '''Returns lc=True and rc=True if the Goldstein conditions
+        are fulfilled for alpha_0 and alpha_L. 
+        '''                
         #Define the boolean return variables
         lc = False
         rc = False
@@ -329,9 +342,10 @@ class Solver(object):
         return lc, rc
 
     def compute_gradient(self, x):
-        ''' Estimates the gradient of the problem's objective function at
+        '''Estimates the gradient of the problem's objective function at
         point x, using a (central) finite difference. If the solver has been
-        provided with an exact formula for the gradient, this is used instead.'''
+        provided with an exact formula for the gradient, this is used instead.
+        '''
         self.geval+=1
         
         # Do we have an explicit function for the gradient? Then use it!
@@ -357,7 +371,8 @@ class Solver(object):
     def compute_hessian(self, x):
         ''' Estimates the hessian of the problem's objective function at
         point x, using a (central) finite difference. If the solver has been
-        provided with an exact formula for the hessian, this is used instead.'''
+        provided with an exact formula for the hessian, this is used instead.
+        '''
         # Central finte difference:
         # The i:th column of the Hessian, G_i, should equal g(x) differentiated w.r.t. x_i
         # This is approximated with a finite difference:
