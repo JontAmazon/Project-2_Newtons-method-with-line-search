@@ -78,6 +78,7 @@ class Solver(object):
 
         g = self.compute_gradient(x_k)
         H = sl.inv(self.compute_hessian(x_k))
+#        H = np.identity(self.dimensions) #Optional (Steepest Descent Method).
         cheat_count=0 #Used for inexact line search. Number of steps it applies exact line search instead.
         for i in range(self.max_iterations): 
             
@@ -114,9 +115,9 @@ class Solver(object):
                     print('cheating with exact alpha')
                     print('g in cheat:   ' + str(g))
             if self.debug:
-                    print('||s_k||:           ' + str(sl.norm(H@g, 2)))
-                    print('alpha:             ' + str(alpha))
-                    print('x_k'                 + str(x_k ))
+                    print('x_k:      ' + str(x_k.T))
+                    print('||s_k||:  ' + str(sl.norm(H@g, 2)))
+                    print('alpha:    ' + str(alpha))
                     #print('step length:'        + str(alpha*s_k))
             step = alpha*s_k
             if sl.norm(step,2)>50 and len(x_k)==1:
